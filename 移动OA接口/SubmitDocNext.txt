@@ -1,0 +1,28 @@
+*** Settings ***
+Library           RequestsLibrary
+Library           Collections
+
+*** Test Cases ***
+公文办理
+    Create Session    api    http://192.168.25.16:8099
+    ${accountId}    Set Variable    ff80808164d0c86d0164ede9870f003f    #用户ID
+    ${docId}    Set Variable    8b416fd1-d1cf-4870-aa1d-16e39b00bf25    #公文ID
+    ${content}    Set Variable    办理太慢    #办理意见
+    ${addActor}    Set Variable    e4993e10-7b5a-4a10-8b14-a93e222627f8    #下一节点处理人ID
+    ${taskId}    Set Variable    4028999064f4c93f0164f4e60e9d000b    #当前节点（任务）ID
+    ${flg}    Set Variable    1    #办理标志
+    ${addr}    Get Request    api    hyoa/camel/mapi/hyoaMobileService/SubmitDocNext?accountId=${accountId}&docId=${docId}&content=${content}&addActor=${addActor}&taskId=${taskId}&flg=${flg}
+    Should Be Equal As Integers    ${addr.status_code}    200
+    log    ${addr.content}
+    ${responsedata}    to json    ${addr.content}
+    ${keys}    Get Dictionary Keys    ${responsedata}
+    ${items}    Get Dictionary Keys    ${responsedata}
+    ${values}    Get Dictionary Keys    ${responsedata}
+    ${flag}    get from dictionary    ${responsedata}    flag
+    ${exception}    get from dictionary    ${responsedata}    exception
+    ${statusCode}    get from dictionary    ${responsedata}    statusCode
+    Run Keyword If    ${addr.status_code}==200 and '${flag}'=='success' and '${exception}'=='' and ${statusCode}==0    log    获取公文信息成功
+    ...    ELSE IF    ${addr.status_code}!=200    log    获取公文信息失败
+    ...    ELSE IF    '${flag}'=='flase'    log    获取公文信息失败
+    ...    ELSE IF    '${exception}'!=''    log    获取公文信息失败
+    ...    ELSE    ${statusCode}!=0    log    获取公文信息失败

@@ -1,0 +1,23 @@
+*** Settings ***
+Library           RequestsLibrary
+Library           Collections
+Library           json
+Library           HttpLibrary
+Library           HttpLibrary.HTTP
+
+*** Test Cases ***
+获取待办统计
+    Create Session    api    http://192.168.25.16:8099
+    ${description}     Set Variable    123
+    ${addr}    Get Request    api    hyoa/camel/mapi/terminalRestService/getTodoStatistics?userId=${description}
+    Should Be Equal As Integers    ${addr.status_code}    200
+    log    ${addr.content}
+    ${responsedata}    to json    ${addr.content}
+    Comment    ${keys}    Get Dictionary Keys    ${responsedata}
+    Comment    ${items}    Get Dictionary Keys    ${responsedata}
+    Comment    ${values}    Get Dictionary Keys    ${responsedata}
+    Comment    ${categories}    get from dictionary    ${responsedata}    [0]['categories']
+    Comment    ${categoriesName}    get from dictionary    ${responsedata}    [0]['categoriesName']
+    Comment    ${categoriesCount }    get from dictionary    ${responsedata}    [0]['categoriesCount']
+    Run Keyword If    ${addr.status_code}==200    log    获取成功
+    Delete All Sessions
