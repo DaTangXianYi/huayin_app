@@ -21,8 +21,8 @@ Library           Collections
     ${flag}    get from dictionary    ${responsedata}    flag
     ${exception}    get from dictionary    ${responsedata}    exception
     ${statusCode}    get from dictionary    ${responsedata}    statusCode
-    Run Keyword If    ${addr.status_code}==200 and '${flag}'=='success' and '${exception}'=='' and ${statusCode}==0    log    获取公文信息成功
-    ...    ELSE IF    ${addr.status_code}!=200    log    获取公文信息失败
-    ...    ELSE IF    '${flag}'=='flase'    log    获取公文信息失败
-    ...    ELSE IF    '${exception}'!=''    log    获取公文信息失败
-    ...    ELSE    ${statusCode}!=0    log    获取公文信息失败
+    Run Keyword If    ${addr.status_code}==200 and '${flag}'=='success' and '${exception}'=='' and ${statusCode}==0    log    公文办理成功
+    ...    ELSE IF    ${addr.status_code}!=200    log    公文办理失败
+    ...    ELSE IF    '${flag}'=='flase'    log    公文办理失败
+    ...    ELSE IF    '${exception}'!=''    log    公文办理失败
+    ...    ELSE    ${statusCode}!=0    log    公文办理失败

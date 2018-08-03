@@ -27,8 +27,8 @@ Library           Collections
     log    ${rows}
     Comment    ${id}    get from dictionary    ${rows}    id
     Comment    log    ${id}
-    Run Keyword If    ${addr.status_code}==200 and '${flag}'=='success' and '${exception}'=='' and ${statusCode}==0    log    获取发文成功
-    ...    ELSE IF    ${addr.status_code}!=200    log    获取发文失败
-    ...    ELSE IF    '${flag}'=='flase'    log    获取发文失败
-    ...    ELSE IF    '${exception}'!=''    log    获取发文失败
-    ...    ELSE    ${statusCode}!=0    log    获取发文失败
+    Run Keyword If    ${addr.status_code}==200 and '${flag}'=='success' and '${exception}'=='' and ${statusCode}==0    log    获取指定公文类别的公文成功
+    ...    ELSE IF    ${addr.status_code}!=200    log    获取指定公文类别的公文失败
+    ...    ELSE IF    '${flag}'=='flase'    log    获取指定公文类别的公文失败
+    ...    ELSE IF    '${exception}'!=''    log    获取指定公文类别的公文失败
+    ...    ELSE    ${statusCode}!=0    log    获取指定公文类别的公文失败
