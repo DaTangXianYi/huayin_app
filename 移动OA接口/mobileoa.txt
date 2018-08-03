@@ -1,0 +1,29 @@
+*** Settings ***
+Library           Selenium2Library    timeout=100
+Library           requests
+Library           RequestsLibrary
+Library           DatabaseLibrary
+Library           Collections
+
+*** Test Cases ***
+GetOverViewInfo
+    Create Session    api    http://10.232.234.210:8800
+    ${addr}    get request    api    HyAppService.svc/GetOverViewInfo
+    Should Be Equal As Strings    ${addr.status_code}    200    #判断请求响应是否为200，服务器成功返回网页
+    log    ${addr.content}    #打印接口返回值
+    ${responsedate}    to json    ${addr.content}    #使用to json将string转换为json串
+    ${keys}    Get Dictionary Keys    ${responsedate}
+    ${items}    Get Dictionary items    ${responsedate}
+    ${values}    Get Dictionary values    ${responsedate}
+    ${day_fdl}    get from dictionary    ${responsedate}    day_fdl
+    ${fh}    get from dictionary    ${responsedate}    fh
+    ${fhl}    get from dictionary    ${responsedate}    fhl
+    ${month_fdl}    get from dictionary    ${responsedate}    month_fdl
+    ${year_fdl}    get from dictionary    ${responsedate}    year_fdl
+
+GetLoadStock
+    Create Session    api    http://10.232.234.210:8800
+    ${addr}    get request    api    HHyAppService.svc/GetLoadStock?userId= ff8080816218fa3801626f5e554c00e0&timeType=3
+    Should Be Equal As Strings    ${addr.status_code}    200    #判断请求响应是否为200，服务器成功返回网页
+    log    ${addr.content}    #打印接口返回值
+    ${responsedate}    to json    ${addr.content}    #使用to json将string转换为json串
