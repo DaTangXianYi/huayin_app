@@ -1,0 +1,30 @@
+*** Settings ***
+Library           Selenium2Library    timeout=100
+Library           requests
+Library           RequestsLibrary
+Library           DatabaseLibrary
+Library           Collections
+Resource          关键字.txt
+
+*** Test Cases ***
+getRzBustripListby
+    create session    api    http://192.168.25.129:7799    #创建session
+    ${addr}    get request    api    xymis/camel/mapi/terminalRestService/getRzBustripListBy?page=1&pagesize=10
+    Should Be Equal As Strings    ${addr.status_code}    200    #判断请求响应是否为200，服务器成功返回网页
+    log    ${addr.content}    #打印接口返回值
+    ${responsedate}    to json    ${addr.content}    #使用to json将string转换为json串
+    ${keys}    Get Dictionary Keys    ${responsedate}
+    ${items}    Get Dictionary items    ${responsedate}
+    ${values}    Get Dictionary values    ${responsedate}
+    ${currpage}    get from dictionary    ${responsedate}    currpage
+    ${exception}    get from dictionary    ${responsedate}    exception
+    ${flag}    get from dictionary    ${responsedate}    flag
+    ${rows}    get from dictionary    ${responsedate}    rows
+    ${sidx}    get from dictionary    ${responsedate}    sidx
+    ${sord}    get from dictionary    ${responsedate}    sord
+    ${statusCode}    get from dictionary    ${responsedate}    statusCode
+    ${totalpages}    get from dictionary    ${responsedate}    totalpages
+    ${totalrecords}    get from dictionary    ${responsedate}    totalrecords
+    Run Keyword if    '${flag}'=='success'    log    查询成功
+    Run Keyword if    ${statusCode}==0    log    查询成功
+    Delete All Sessions
