@@ -1,0 +1,75 @@
+*** Settings ***
+Documentation     首页
+Test Timeout      2 minutes    # 2分钟
+Library           RequestsLibrary
+Library           Collections
+Library           DatabaseLibrary
+Library           OperatingSystem
+Resource          ../业务关键字.txt
+
+*** Variables ***
+${timestamp}      1534148345000    # 时间戳
+${signInfo}       ea7ffcfeb4228fc4c4cce7175f7670d0    # 密文
+
+*** Test Cases ***
+index_01
+    [Documentation]    首页
+    Set Environment Variable    NLS_LANG    SIMPLIFIED_CHINESE_CHINA_UTF8
+    Create Session    api    http://192.168.26.35:8080
+    ${addr}    Get Request    api    fuel/fuel/index?timestamp=${timestamp}&signInfo=${signInfo}
+    Should Be Equal As Integers    ${addr.status_code}    200
+    ${responsedata}    to json    ${addr.content}
+    ${keys}    Get Dictionary Keys    ${responsedata}
+    ${items}    Get Dictionary Keys    ${responsedata}
+    ${values}    Get Dictionary Keys    ${responsedata}
+    ${msg}    get from dictionary    ${responsedata}    msg
+    ${status}    get from dictionary    ${responsedata}    status
+    ${success}    get from dictionary    ${responsedata}    success
+    ${data}    get from dictionary    ${responsedata}    data
+    ${d_010_2}    get from dictionary    ${data}    d_010_2    #库存煤量
+    ${d_002_2}    get from dictionary    ${data}    d_002_2    #来煤量
+    ${d_003_2}    get from dictionary    ${data}    d_003_2    #耗煤量
+    ${d_001_2}    get from dictionary    ${data}    d_001_2    #入厂标单含税
+    ${d_022_2}    get from dictionary    ${data}    d_022_2    #热值差
+    Run Keyword If    '${addr.status_code}'=='${status}' and '${msg}'=='success' and '${success}'=='True'    log    首页查询成功
+    ...    ELSE IF    '${addr.status_code}'!='${status}'    log    首页查询失败
+    ...    ELSE IF    ${addr.status_code}!=200    log    首页查询失败
+    ...    ELSE IF    '${msg}'!='success'    log    首页查询失败
+    ...    ELSE    '${success}'!='True'    log    首页查询失败
+    Delete All Sessions
+
+index_02
+    [Documentation]    首页
+    UTF8Environment
+    SessionCreate    http://192.168.26.35:8080
+    RequestGet    fuel/fuel/index?timestamp=${timestamp}&signInfo=${signInfo}    200
+    ReturnParameter    msg    status    success    data    d_010_2    d_002_2
+    ...    d_003_2    d_001_2    d_022_2
+    JudgeCondition    '${addr.status_code}'=='${status}' and '${msg}'=='success' and '${success}'=='True'    '${addr.status_code}'!='${status}'    ${addr.status_code}!=200    '${msg}'!='success'    '${success}'!='True'
+    Delete All Sessions
+
+*** Keywords ***
+ReturnParameter
+    [Arguments]    ${a}    ${b}    ${c}    ${d}    ${e}    ${f}
+    ...    ${g}    ${h}    ${i}
+    ${responsedata}    to json    ${addr.content}
+    ${keys}    Get Dictionary Keys    ${responsedata}
+    ${items}    Get Dictionary Keys    ${responsedata}
+    ${values}    Get Dictionary Keys    ${responsedata}
+    ${msg}    get from dictionary    ${responsedata}    ${a}
+    ${status}    get from dictionary    ${responsedata}    ${b}
+    ${success}    get from dictionary    ${responsedata}    ${c}
+    ${data}    get from dictionary    ${responsedata}    ${d}
+    ${d_010_2}    get from dictionary    ${data}    ${e}    #库存煤量
+    ${d_002_2}    get from dictionary    ${data}    ${f}    #来煤量
+    ${d_003_2}    get from dictionary    ${data}    ${g}    #耗煤量
+    ${d_001_2}    get from dictionary    ${data}    ${h}    #入厂标单含税
+    ${d_022_2}    get from dictionary    ${data}    ${i}    #热值差
+
+JudgeCondition
+    [Arguments]    ${conditions-1}    ${conditions-2}    ${conditions-3}    ${conditions-4}    ${conditions-5}
+    Run Keyword If    ${conditions-1}    log    首页查询成功
+    ...    ELSE IF    ${conditions-2}    log    首页查询失败
+    ...    ELSE IF    ${conditions-3}    log    首页查询失败
+    ...    ELSE IF    ${conditions-4}    log    首页查询失败
+    ...    ELSE    ${conditions-5}    log    首页查询失败

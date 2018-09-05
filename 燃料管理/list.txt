@@ -1,0 +1,81 @@
+*** Settings ***
+Documentation     列表页
+Test Timeout      2 minutes    # 2分钟
+Library           RequestsLibrary
+Library           Collections
+Library           DatabaseLibrary
+Library           OperatingSystem
+Resource          ../业务关键字.txt
+
+*** Variables ***
+${timestamp}      1533283780    # 时间戳
+${date}           2018-08-02    # 日期
+${dataType}       1    # 1:煤量 2：煤价 3：厂炉差
+${signInfo}       e80d6fe9474730b1fb99f798d7f95ff0    # 密文
+
+*** Test Cases ***
+list_01
+    [Documentation]    列表页
+    Set Environment Variable    NLS_LANG    SIMPLIFIED_CHINESE_CHINA_UTF8
+    Create Session    api    http://192.168.26.35:8080
+    ${addr}    Get Request    api    fuel/fuel/list?dataType=1&date=${date}&timestamp=${timestamp}&signInfo=${signInfo}
+    Should Be Equal As Integers    ${addr.status_code}    200
+    ${responsedata}    to json    ${addr.content}
+    ${keys}    Get Dictionary Keys    ${responsedata}
+    ${items}    Get Dictionary Keys    ${responsedata}
+    ${values}    Get Dictionary Keys    ${responsedata}
+    ${msg}    get from dictionary    ${responsedata}    msg
+    ${status}    get from dictionary    ${responsedata}    status
+    ${success}    get from dictionary    ${responsedata}    success
+    ${data}    get from dictionary    ${responsedata}    data
+    ${organ_id}    get from dictionary    ${data[0]}    organ_id    #地市ID
+    ${organ_name}    get from dictionary    ${data[0]}    organ_name    #地市ID
+    ${d_002_2}    get from dictionary    ${data[0]}    d_002_2
+    ${d_003_1}    get from dictionary    ${data[0]}    d_003_1
+    ${d_001_1}    get from dictionary    ${data[0]}    d_001_1
+    ${d_001_2}    get from dictionary    ${data[0]}    d_001_2
+    ${d_002_1}    get from dictionary    ${data[0]}    d_002_1
+    Run Keyword If    '${addr.status_code}'=='${status}' and '${msg}'=='success' and '${success}'=='True'    log    列表页查询成功
+    ...    ELSE IF    '${addr.status_code}'!='${status}'    log    列表页查询失败
+    ...    ELSE IF    ${addr.status_code}!=200    log    列表页查询失败
+    ...    ELSE IF    '${msg}'!='success'    log    列表页查询失败
+    ...    ELSE    '${success}'!='True'    log    列表页查询失败
+    Delete All Sessions
+
+list_02
+    [Documentation]    列表页
+    UTF8Environment
+    SessionCreate    http://192.168.26.35:8080
+    RequestGet    fuel/fuel/list?dataType=1&date=${date}&timestamp=${timestamp}&signInfo=${signInfo}    200
+    ReturnParameter    msg    status    success    data    d_002_2    d_003_1
+    ...    d_001_1    d_001_2    d_002_1
+    JudgeCondition    '${addr.status_code}'=='${status}' and '${msg}'=='success' and '${success}'=='True'    '${addr.status_code}'!='${status}'    ${addr.status_code}!=200    '${msg}'!='success'    '${success}'!='True'
+    Delete All Sessions
+
+*** Keywords ***
+ReturnParameter
+    [Arguments]    ${a}    ${b}    ${c}    ${d}    ${e}    ${f}
+    ...    ${g}    ${h}    ${i}
+    ${responsedata}    to json    ${addr.content}
+    ${keys}    Get Dictionary Keys    ${responsedata}
+    ${items}    Get Dictionary Keys    ${responsedata}
+    ${values}    Get Dictionary Keys    ${responsedata}
+    ${msg}    get from dictionary    ${responsedata}    ${a}
+    ${status}    get from dictionary    ${responsedata}    ${b}
+    ${success}    get from dictionary    ${responsedata}    ${c}
+    ${data}    get from dictionary    ${responsedata}    ${d}
+    ${organ_id}    get from dictionary    ${data[0]}    organ_id    #地市ID
+    ${organ_name}    get from dictionary    ${data[0]}    organ_name    #地市ID
+    ${d_002_2}    get from dictionary    ${data[0]}    ${e}
+    ${d_003_1}    get from dictionary    ${data[0]}    ${f}
+    ${d_001_1}    get from dictionary    ${data[0]}    ${g}
+    ${d_001_2}    get from dictionary    ${data[0]}    ${h}
+    ${d_002_1}    get from dictionary    ${data[0]}    ${i}
+
+JudgeCondition
+    [Arguments]    ${conditions-1}    ${conditions-2}    ${conditions-3}    ${conditions-4}    ${conditions-5}
+    Run Keyword If    ${conditions-1}    log    列表页查询成功
+    ...    ELSE IF    ${conditions-2}    log    列表页查询失败
+    ...    ELSE IF    ${conditions-3}    log    列表页查询失败
+    ...    ELSE IF    ${conditions-4}    log    列表页查询失败
+    ...    ELSE    ${conditions-5}    log    列表页查询失败

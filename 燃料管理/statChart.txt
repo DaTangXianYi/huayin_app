@@ -1,0 +1,77 @@
+*** Settings ***
+Documentation     图表
+Test Timeout      2 minutes    # 2分钟
+Library           RequestsLibrary
+Library           Collections
+Library           DatabaseLibrary
+Library           OperatingSystem
+Resource          ../业务关键字.txt
+
+*** Variables ***
+${timestamp}      1534212002000    # 时间戳
+${signInfo}       58A6069EF5C9DFED287BD4AA0EDE37B7    # 密文
+${organ_id}       \    # 地市ID；可选，不传时统计所有地市合计
+${target_code}    001    # 指标编号
+${dataType}       1    # 数据类型;1:日累计2:月累计3:年累计;对应数据库的type字段
+${statType}       1    # 统计类型:1:本月;2:本年3:去年以来
+
+*** Test Cases ***
+statChart_01
+    [Documentation]    图表
+    Set Environment Variable    NLS_LANG    SIMPLIFIED_CHINESE_CHINA_UTF8
+    Create Session    api    http://192.168.26.35:8080
+    ${addr}    Get Request    api    fuel/fuel/statChart?dataType=${dataType}&statType=${statType}&timestamp=${timestamp}&target_code=${target_code}&signInfo=${signInfo}
+    Should Be Equal As Integers    ${addr.status_code}    200
+    ${responsedata}    to json    ${addr.content}
+    ${keys}    Get Dictionary Keys    ${responsedata}
+    ${items}    Get Dictionary Keys    ${responsedata}
+    ${values}    Get Dictionary Keys    ${responsedata}
+    ${msg}    get from dictionary    ${responsedata}    msg
+    ${status}    get from dictionary    ${responsedata}    status
+    ${success}    get from dictionary    ${responsedata}    success
+    ${data}    get from dictionary    ${responsedata}    data
+    ${target_code}    get from dictionary    ${data[0]}    target_code    #指标对应日期
+    ${target_value}    get from dictionary    ${data[0]}    target_value    #指标编号
+    ${dateString}    get from dictionary    ${data[0]}    dateString    #指标对应值
+    Run Keyword If    '${addr.status_code}'=='${status}' and '${msg}'=='success' and '${success}'=='True'    log    图标查询成功
+    ...    ELSE IF    '${addr.status_code}'!='${status}'    log    图标查询失败
+    ...    ELSE IF    ${addr.status_code}!=200    log    图标查询失败
+    ...    ELSE IF    '${msg}'!='success'    log    图标查询失败
+    ...    ELSE    '${success}'!='True'    log    图标查询失败
+    Delete All Sessions
+
+statChart_02
+    [Documentation]    图表
+    UTF8Environment
+    SessionCreate    http://192.168.26.35:8080
+    RequestGet    fuel/fuel/statChart?dataType=${dataType}&statType=${statType}&timestamp=${timestamp}&target_code=${target_code}&signInfo=${signInfo}    200
+    ReturnParameter    msg    status    success    data    target_code    target_value
+    ...    dateString
+    JudgeCondition    '${addr.status_code}'=='${status}' and '${msg}'=='success' and '${success}'=='True'    '${addr.status_code}'!='${status}'    ${addr.status_code}!=200    '${msg}'!='success'    '${success}'!='True'
+    Delete All Sessions
+
+*** Keywords ***
+ReturnParameter
+    [Arguments]    ${a}    ${b}    ${c}    ${d}    ${e}    ${f}
+    ...    ${g}
+    ${responsedata}    to json    ${addr.content}
+    ${keys}    Get Dictionary Keys    ${responsedata}
+    ${items}    Get Dictionary Keys    ${responsedata}
+    ${values}    Get Dictionary Keys    ${responsedata}
+    ${msg}    get from dictionary    ${responsedata}    ${a}
+    ${status}    get from dictionary    ${responsedata}    ${b}
+    ${success}    get from dictionary    ${responsedata}    ${c}
+    ${data}    get from dictionary    ${responsedata}    ${d}
+    ${organ_id}    get from dictionary    ${data[0]}    organ_id    #地市ID
+    ${organ_name}    get from dictionary    ${data[0]}    organ_name    #地市ID
+    ${target_code}    get from dictionary    ${data[0]}    ${e}
+    ${target_value}    get from dictionary    ${data[0]}    ${f}
+    ${dateString}    get from dictionary    ${data[0]}    ${g}
+
+JudgeCondition
+    [Arguments]    ${conditions-1}    ${conditions-2}    ${conditions-3}    ${conditions-4}    ${conditions-5}
+    Run Keyword If    ${conditions-1}    log    图标查询成功
+    ...    ELSE IF    ${conditions-2}    log    图标查询失败
+    ...    ELSE IF    ${conditions-3}    log    图标查询失败
+    ...    ELSE IF    ${conditions-4}    log    图标查询失败
+    ...    ELSE    ${conditions-5}    log    图标查询失败
