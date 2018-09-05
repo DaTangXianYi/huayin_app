@@ -1,0 +1,58 @@
+*** Settings ***
+Documentation     获取邮箱登录账号
+Test Timeout      2 minutes    # 2分钟
+Library           RequestsLibrary
+Library           Collections
+Library           DatabaseLibrary
+Library           OperatingSystem
+Resource          ../业务关键字.txt
+
+*** Variables ***
+${userId}         9bc324eb-56f1-4bee-9357-1d453f2e9188    # 用户ID
+
+*** Test Cases ***
+LoginEmail_01
+    [Documentation]    获取邮箱登录账号成功
+    [Timeout]    1 minute    # 1分钟
+    Set Environment Variable    NLS_LANG    SIMPLIFIED_CHINESE_CHINA_UTF8
+    Create Session    api    http://192.168.26.35:8080
+    ${addr}    get request    api    hyoa/camel/mapi/terminalRestService/LoginEmail?userId=${userId}
+    Should Be Equal As Strings    ${addr.status_code}    200
+    ${responsedate}    to json    ${addr.content}
+    ${keys}    Get Dictionary Keys    ${responsedate}
+    ${items}    Get Dictionary items    ${responsedate}
+    ${values}    Get Dictionary values    ${responsedate}
+    ${attribute}    get from dictionary    ${responsedate}    attribute
+    ${loginName}    get from dictionary    ${responsedate}    loginName
+    Connect To Database Using Custom Params    cx_Oracle    'hyoa_app','hyoa_app','192.168.20.12:1521/jreap_dev'
+    ${result}    Query    select a.login_name from security_account a where a.id='${userId}'
+    Should Be Equal As Strings    ${loginName}    ${result[0][0]}
+    Disconnect From Database
+    Delete All Sessions
+
+LoginEmail_02
+    [Documentation]    获取邮箱登录账号成功:分层
+    [Template]    RequestGet
+    [Timeout]    1 minute    # 1分钟
+    UTF8Environment
+    SessionCreate    http://192.168.26.35:8080
+    RequestGet    hyoa/camel/mapi/terminalRestService/LoginEmail?userId=${userId}    200
+    ReturnParameter    attribute    loginName
+    OracleConnect    'hyoa_app','hyoa_app','192.168.20.12:1521/jreap_dev'    select a.login_name from security_account a where a.id='${userId}'
+    InquireDatabase
+    Disconnect From Database
+    Delete All Sessions
+
+*** Keywords ***
+ReturnParameter
+    [Arguments]    ${a}    ${b}    ${addr.content}
+    ${responsedata}    to json    ${addr.content}
+    ${keys}    Get Dictionary Keys    ${responsedata}
+    ${items}    Get Dictionary Keys    ${responsedata}
+    ${values}    Get Dictionary Keys    ${responsedata}
+    ${attribute}    get from dictionary    ${responsedata}    ${a}
+    ${loginName}    get from dictionary    ${responsedata}    ${b}
+
+InquireDatabase
+    [Arguments]    ${loginName}    ${result[0][0]}
+    Should Be Equal As Strings    ${loginName}    ${result[0][0]}

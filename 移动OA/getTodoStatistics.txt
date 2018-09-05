@@ -1,0 +1,67 @@
+*** Settings ***
+Documentation     获取待办统计
+Test Timeout      2 minutes    # 2分钟
+Library           HttpLibrary
+Library           HttpLibrary.HTTP
+Library           RequestsLibrary
+Library           Collections
+Library           DatabaseLibrary
+Library           OperatingSystem
+Resource          ../业务关键字.txt
+
+*** Variables ***
+${userId}         ff80808164d0c86d0164ede9870f003c    # 用户ID
+
+*** Test Cases ***
+getTodoStatistics_01
+    [Documentation]    获取待办统计成功
+    [Timeout]    1 minute    # 1分钟
+    Set Environment Variable    NLS_LANG    SIMPLIFIED_CHINESE_CHINA_UTF8
+    Create Session    api    http://192.168.26.35:8080
+    ${addr}    Get Request    api    hyoa/camel/mapi/terminalRestService/getTodoStatistics?userId=${userId}
+    Should Be Equal As Integers    ${addr.status_code}    200
+    Connect To Database Using Custom Params    cx_Oracle    'hyoa_app','hyoa_app','192.168.20.12:1521/jreap_dev'
+    ${rs}    Query    select t.description from SECURITY_ACCOUNT t WHERE t.description='${userId}'
+    ${description}=    Set Variable    ${rs[0][0]}
+    Should Be Equal As Strings    ${description}    ${userId}
+    Disconnect From Database
+    ${responsedata}    to json    ${addr.content}
+    ${categories-0}    get from dictionary    ${responsedata[0]}    categories
+    ${categoriesName-0}    get from dictionary    ${responsedata[0]}    categoriesName
+    ${categoriesCount-0}    get from dictionary    ${responsedata[0]}    categoriesCount
+    ${categories-1}    get from dictionary    ${responsedata[1]}    categories
+    ${categoriesName-1}    get from dictionary    ${responsedata[1]}    categoriesName
+    ${categoriesCount-1}    get from dictionary    ${responsedata[1]}    categoriesCount
+    Run Keyword If    ${addr.status_code}==200    log    获取待办统计成功
+    ...    ELSE IF    ${addr.status_code}!=200    获取待办统计失败
+    Delete All Sessions
+
+getTodoStatistics_02
+    [Documentation]    获取待办统计成功：分层
+    [Timeout]    1 minute    # 1分钟
+    UTF8Environment
+    SessionCreate    http://192.168.26.35:8080
+    RequestGet    hyoa/camel/mapi/terminalRestService/getTodoStatistics?userId=${userId}    200
+    OracleConnect    'hyoa_app','hyoa_app','192.168.20.12:1521/jreap_dev'    select t.description from SECURITY_ACCOUNT t WHERE t.description='${userId}'
+    InquireDatabase
+    Disconnect From Database
+    ReturnParameter    categories    categoriesName    categoriesCount
+    JudgeCondition    ${addr.status_code}==200    ${addr.status_code}!=200
+    Delete All Sessions
+
+*** Keywords ***
+ReturnParameter
+    [Arguments]    ${a}    ${b}    ${c}
+    ${responsedata}    to json    ${addr.content}
+    ${categories}    get from dictionary    ${responsedata[0]}    ${a}
+    ${categoriesName}    get from dictionary    ${responsedata[0]}    ${b}
+    ${categoriesCount}    get from dictionary    ${responsedata[0]}    ${c}
+
+InquireDatabase
+    ${description}=    Set Variable    ${rs[0][0]}
+    Should Be Equal As Strings    ${description}    ${userId}
+
+JudgeCondition
+    [Arguments]    ${conditions-1}    ${conditions-2}
+    Run Keyword If    ${addr.status_code}==200    log    获取待办统计成功
+    ...    ELSE IF    ${addr.status_code}!=200    获取待办统计失败

@@ -1,0 +1,206 @@
+*** Settings ***
+Documentation     获取指定公文的信息
+Test Timeout      2 minutes    # 2分钟
+Library           RequestsLibrary
+Library           Collections
+Library           DatabaseLibrary
+Library           OperatingSystem
+Resource          ../业务关键字.txt
+
+*** Variables ***
+${userId}         ff80808164d0c86d0164ede9870f003c    # 用户ID
+${terId}          0036da4b-a302-4a1f-bbd8-3ff3a2db8e20    # 公文ID
+${taskId}         402899906536c641016537f458f90114    # 任务ID
+${processId}      a13ddea2-b161-45c9-87d5-4e5b01e0db03    # 流程实例ID
+${terType}        fwPro    #公文类型:发文fwPro;收文swPro;签报qbPr
+
+*** Test Cases ***
+getTerminalCountVOByTid_01
+    [Documentation]    获取指定公文的信息成功
+    [Timeout]    1 minute    # 1分钟
+    Set Environment Variable    NLS_LANG    SIMPLIFIED_CHINESE_CHINA_UTF8
+    Create Session    api    http://192.168.26.35:8080
+    ${addr}    Get Request    api    hyoa/camel/mapi/terminalRestService/getTerminalCountVOByTid?userId=${userId}&terId=${terId}&terType=${terType}&taskId=${taskId}&processId=${processId}
+    Should Be Equal As Integers    ${addr.status_code}    200
+    ${responsedata}    to json    ${addr.content}
+    ${keys}    Get Dictionary Keys    ${responsedata}
+    ${items}    Get Dictionary Keys    ${responsedata}
+    ${values}    Get Dictionary Keys    ${responsedata}
+    ${flag}    get from dictionary    ${responsedata}    flag
+    ${exception}    get from dictionary    ${responsedata}    exception
+    ${statusCode}    get from dictionary    ${responsedata}    statusCode
+    ${result}    get from dictionary    ${responsedata}    result
+    ${officialId}    get from dictionary    ${result}    officialId
+    ${officialName}    get from dictionary    ${result}    officialName
+    ${dispitchOrg}    get from dictionary    ${result}    dispitchOrg
+    ${officialNum}    get from dictionary    ${result}    officialNum
+    ${officialTime}    get from dictionary    ${result}    officialTime
+    ${fileName}    get from dictionary    ${result}    fileName
+    ${fileBody}    get from dictionary    ${result}    fileBody
+    ${dqTaskName}    get from dictionary    ${result}    dqTaskName
+    ${dqTaskId}    get from dictionary    ${result}    dqTaskId
+    ${attFileVOList}    get from dictionary    ${result}    attFileVOList
+    ${manageAdvanceVOList}    get from dictionary    ${result}    manageAdvanceVOList
+    ${manageName}    get from dictionary    ${manageAdvanceVOList[0]}    manageName
+    ${manageTime}    get from dictionary    ${manageAdvanceVOList[0]}    manageTime
+    ${manageType}    get from dictionary    ${manageAdvanceVOList[0]}    manageType
+    ${manegeActivity}    get from dictionary    ${manageAdvanceVOList[0]}    manegeActivity
+    ${manageAdvance}    get from dictionary    ${manageAdvanceVOList[0]}    manageAdvance
+    ${manageEvent}    get from dictionary    ${manageAdvanceVOList[0]}    manageEvent
+    ${manageTaskVOList}    get from dictionary    ${result}    manageTaskVOList
+    ${taskId}    get from dictionary    ${manageTaskVOList[0]}    taskId
+    ${taskName}    get from dictionary    ${manageTaskVOList[0]}    taskName
+    Connect To Database Using Custom Params    cx_Oracle    'hyoa_app','hyoa_app','192.168.20.12:1521/jreap_dev'
+    ${rs}    Query    select (select t.description from SECURITY_ACCOUNT t WHERE t.description='${userId}') as userId,(select t.id from HYOA_DOC_DISPATCH t WHERE t.id='${terId}') as terId,(select t.id from (select t.business_key,max(t.id) id from BPM_RU_TASK t group by t.business_key) t WHERE t.id='${taskId}') as taskId,(select t.process_instance_id from BPM_HI_ACTIVITY_EVENT t WHERE t.process_instance_id='${processId}' and rownum=1) as processId FROM BPM_HI_ACTIVITY_EVENT d where rownum=1
+    ${userId-1}    Set Variable    ${rs[0][0]}
+    ${terId-1}    Set Variable    ${rs[0][1]}
+    ${taskId-1}    Set Variable    ${rs[0][2]}
+    ${processId-1}    Set Variable    ${rs[0][3]}
+    Should Be Equal As Strings    ${userId-1}    ${userId}
+    Should Be Equal As Strings    ${terId-1}    ${terId}
+    Should Be Equal As Strings    ${taskId-1}    ${taskId}
+    Should Be Equal As Strings    ${processId-1}    ${processId}
+    Disconnect From Database
+    Connect To Database Using Custom Params    cx_Oracle    'hyoa_app','hyoa_app','192.168.20.12:1521/jreap_dev'
+    ${ls}    Query    select t.id,t.title,t.sponsor,t.record_no,t.create_time,t.title,t.file_url from HYOA_DOC_DISPATCH t where t.id='${officialId}' and rownum=1
+    ${officialId-1}    Set Variable    ${ls[0][0]}
+    ${officialName-1}    decode    ${ls[0][1]}    GBK
+    ${dispitchOrg-1}    decode    ${ls[0][2]}    GBK
+    ${officialNum-1}    decode    ${ls[0][3]}    GBK
+    ${officialTime-1}    Set Variable    ${ls[0][4]}
+    ${fileName-1}    decode    ${ls[0][5]}    GBK
+    ${fileBody-1}    decode    ${ls[0][6]}    GBK
+    Should Be Equal As Strings    ${officialId-1}    ${officialId}
+    Should Be Equal As Strings    ${officialName-1}    ${officialName}
+    Should Be Equal As Strings    ${dispitchOrg-1}    ${dispitchOrg}
+    Should Be Equal As Strings    ${officialNum-1}    ${officialNum}
+    Should Be Equal As Strings    ${officialTime-1}    ${officialTime}
+    Should Be Equal As Strings    ${fileName-1}    ${fileName}
+    Should Be Equal As Strings    ${fileBody-1}    ${fileBody}
+    Disconnect From Database
+    Connect To Database Using Custom Params    cx_Oracle    'hyoa_app','hyoa_app','192.168.20.12:1521/jreap_dev'
+    ${xs}    Query    select (select a.name from bpm_account a where a.id = t.account_id) as manageName,t.handler_descrip as manageType,TO_CHAR(t.end_time,'YYYY-MM-DD')as manageTime,t.comment_ as manageAdvance,t.event_name as manageEvent,t.activity_name as manegeActivity from BPM_HI_ACTIVITY_EVENT t where t.process_instance_id='${processId}' and t.handler_descrip='${manageType}'
+    ${manageName-1}    decode    ${xs[0][0]}    GBK
+    ${manageType-1}    decode    ${xs[0][1]}    GBK
+    ${manageTime-1}    decode    ${xs[0][2]}    GBK
+    ${manageAdvance-1}    decode    ${xs[0][3]}    GBK
+    ${manageEvent-1}    decode    ${xs[0][4]}    GBK
+    ${manegeActivity-1}    decode    ${xs[0][5]}    GBK
+    Should Be Equal As Strings    ${manageName-1}    ${manageName}
+    Should Be Equal As Strings    ${manageType-1}    ${manageType}
+    Should Be Equal As Strings    ${manageTime-1}    ${manageTime}
+    Should Be Equal As Strings    ${manageAdvance-1}    ${manageAdvance}
+    Should Be Equal As Strings    ${manageEvent-1}    ${manageEvent}
+    Should Be Equal As Strings    ${manegeActivity-1}    ${manegeActivity}
+    Disconnect From Database
+    Run Keyword If    ${addr.status_code}==200 and '${flag}'=='success' and '${exception}'=='' and ${statusCode}==0    log    获取指定公文的信息成功
+    ...    ELSE IF    ${addr.status_code}!=200    log    获取指定公文的信息失败
+    ...    ELSE IF    '${flag}'=='flase'    log    获取指定公文的信息失败
+    ...    ELSE IF    '${exception}'!=''    log    获取指定公文的信息失败
+    ...    ELSE    ${statusCode}!=0    log    获取指定公文的信息失败
+    Delete All Sessions
+
+getTerminalCountVOByTid_02
+    [Documentation]    获取指定公文的信息成功：分层
+    [Timeout]    1 minute    # 1分钟
+    UTF8Environment
+    SessionCreate    http://192.168.25.16:8099
+    RequestGet    hyoa/camel/mapi/terminalRestService/getTerminalCountVOByTid?userId=${userId}&terId=${terId}&terType=${terType}&taskId=${taskId}&processId=${processId}    200
+    ReturnParameter    flag    exception    statusCode    result    officialId    officialName
+    ...    dispitchOrg    officialNum    officialTime    fileName    fileBody    dqTaskName
+    ...    dqTaskId    attFileVOList    manageAdvanceVOList    manageName    manageTime    manageType
+    ...    manegeActivity    manageAdvance    manageEvent    manageTaskVOList    taskId    taskName
+    OracleConnect    'hyoa_app','hyoa_app','192.168.20.12:1521/jreap_dev'    select (select t.description from SECURITY_ACCOUNT t WHERE t.description='${userId}') as userId,(select t.id from HYOA_DOC_DISPATCH t WHERE t.id='${terId}') as terId,(select t.id from (select t.business_key,max(t.id) id from BPM_RU_TASK t group by t.business_key) t WHERE t.id='${taskId}') as taskId,(select t.process_instance_id from BPM_HI_ACTIVITY_EVENT t WHERE t.process_instance_id='${processId}' and rownum=1) as processId FROM BPM_HI_ACTIVITY_EVENT d where rownum=1
+    InquireDatabase1
+    Disconnect From Database
+    OracleConnect    'hyoa_app','hyoa_app','192.168.20.12:1521/jreap_dev'    select t.id,t.title,t.sponsor,t.record_no,t.create_time,t.title,t.file_url from HYOA_DOC_DISPATCH t where t.id='${officialId}' and rownum=1
+    InquireDatabase2
+    Disconnect From Database
+    OracleConnect    'hyoa_app','hyoa_app','192.168.20.12:1521/jreap_dev'    select (select a.name from bpm_account a where a.id = t.account_id) as manageName,t.handler_descrip as manageType,TO_CHAR(t.end_time,'YYYY-MM-DD')as manageTime,t.comment_ as manageAdvance,t.event_name as manageEvent,t.activity_name as manegeActivity from BPM_HI_ACTIVITY_EVENT t where t.process_instance_id='${processId}' and t.handler_descrip='${manageType}'
+    InquireDatabase3
+    Disconnect From Database
+    JudgeCondition    ${addr.status_code}==200 and '${flag}'=='success' and '${exception}'=='' and ${statusCode}==0    ${addr.status_code}!=200    '${flag}'=='flase'    '${exception}'!=''    ${statusCode}!=0
+    Delete All Sessions
+
+*** Keywords ***
+ReturnParameter
+    [Arguments]    ${a}    ${b}    ${c}    ${d}    ${e}    ${f}
+    ...    ${g}    ${h}    ${i}    ${j}    ${k}    ${l}
+    ...    ${m}    ${n}    ${o}    ${p}    ${q}    ${r}
+    ...    ${s}    ${t}    ${u}    ${v}    ${w}    ${x}
+    ${responsedata}    to json    ${addr.content}
+    ${keys}    Get Dictionary Keys    ${responsedata}
+    ${items}    Get Dictionary Keys    ${responsedata}
+    ${values}    Get Dictionary Keys    ${responsedata}
+    ${flag}    get from dictionary    ${responsedata}    ${a}
+    ${exception}    get from dictionary    ${responsedata}    ${b}
+    ${statusCode}    get from dictionary    ${responsedata}    ${c}
+    ${result}    get from dictionary    ${responsedata}    ${d}
+    ${officialId}    get from dictionary    ${result}    ${e}
+    ${officialName}    get from dictionary    ${result}    ${f}
+    ${dispitchOrg}    get from dictionary    ${result}    ${g}
+    ${officialNum}    get from dictionary    ${result}    ${h}
+    ${officialTime}    get from dictionary    ${result}    ${i}
+    ${fileName}    get from dictionary    ${result}    ${j}
+    ${fileBody}    get from dictionary    ${result}    ${k}
+    ${dqTaskName}    get from dictionary    ${result}    ${l}
+    ${dqTaskId}    get from dictionary    ${result}    ${m}
+    ${attFileVOList}    get from dictionary    ${result}    ${n}
+    ${manageAdvanceVOList}    get from dictionary    ${result}    ${o}
+    ${manageName}    get from dictionary    ${manageAdvanceVOList[0]}    ${p}
+    ${manageTime}    get from dictionary    ${manageAdvanceVOList[0]}    ${q}
+    ${manageType}    get from dictionary    ${manageAdvanceVOList[0]}    ${r}
+    ${manegeActivity}    get from dictionary    ${manageAdvanceVOList[0]}    ${s}
+    ${manageAdvance}    get from dictionary    ${manageAdvanceVOList[0]}    ${t}
+    ${manageEvent}    get from dictionary    ${manageAdvanceVOList[0]}    ${u}
+    ${manageTaskVOList}    get from dictionary    ${result}    ${v}
+    ${taskId}    get from dictionary    ${manageTaskVOList[0]}    ${w}
+    ${taskName}    get from dictionary    ${manageTaskVOList[0]}    ${x}
+
+InquireDatabase1
+    ${userId-1}    decode    ${rs[0][0]}    GBK
+    ${terId-1}    decode    ${rs[0][1]}    GBK
+    ${taskId-1}    decode    ${rs[0][2]}    GBK
+    ${processId-1}    decode    ${rs[0][3]}    GBK
+    Should Be Equal As Strings    ${userId-1}    ${userId}
+    Should Be Equal As Strings    ${terId-1}    ${terId}
+    Should Be Equal As Strings    ${taskId-1}    ${taskId}
+    Should Be Equal As Strings    ${processId-1}    ${processId}
+
+InquireDatabase2
+    ${officialId-1}    decode    ${ls[0][0]}    GBK
+    ${officialName-1}    decode    ${ls[0][1]}    GBK
+    ${dispitchOrg-1}    decode    ${ls[0][2]}    GBK
+    ${officialNum-1}    decode    ${ls[0][3]}    GBK
+    ${officialTime-1}    decode    ${ls[0][4]}    GBK
+    ${fileName-1}    decode    ${ls[0][5]}    GBK
+    ${fileBody-1}    decode    ${ls[0][6]}    GBK
+    Should Be Equal As Strings    ${officialId-1}    ${officialId}
+    Should Be Equal As Strings    ${officialName-1}    ${officialName}
+    Should Be Equal As Strings    ${dispitchOrg-1}    ${dispitchOrg}
+    Should Be Equal As Strings    ${officialNum-1}    ${officialNum}
+    Should Be Equal As Strings    ${officialTime-1}    ${officialTime}
+    Should Be Equal As Strings    ${fileName-1}    ${fileName}
+    Should Be Equal As Strings    ${fileBody-1}    ${fileBody}
+
+InquireDatabase3
+    ${manageName-1}    decode    ${xs[0][0]}    GBK
+    ${manageType-1}    decode    ${xs[0][1]}    GBK
+    ${manageTime-1}    decode    ${xs[0][2]}    GBK
+    ${manageAdvance-1}    decode    ${xs[0][3]}    GBK
+    ${manageEvent-1}    decode    ${xs[0][4]}    GBK
+    ${manegeActivity-1}    decode    ${xs[0][5]}    GBK
+    Should Be Equal As Strings    ${manageName-1}    ${manageName}
+    Should Be Equal As Strings    ${manageType-1}    ${manageType}
+    Should Be Equal As Strings    ${manageTime-1}    ${manageTime}
+    Should Be Equal As Strings    ${manageAdvance-1}    ${manageAdvance}
+    Should Be Equal As Strings    ${manageEvent-1}    ${manageEvent}
+    Should Be Equal As Strings    ${manegeActivity-1}    ${manegeActivity}
+
+JudgeCondition
+    [Arguments]    ${conditions-1}    ${conditions-2}    ${conditions-3}    ${conditions-4}    ${conditions-5}
+    Run Keyword If    ${addr.status_code}==200 and '${flag}'=='success' and '${exception}'=='' and ${statusCode}==0    log    获取指定公文的信息成功
+    ...    ELSE IF    ${addr.status_code}!=200    log    获取指定公文的信息失败
+    ...    ELSE IF    '${flag}'=='flase'    log    获取指定公文的信息失败
+    ...    ELSE IF    '${exception}'!=''    log    获取指定公文的信息失败
+    ...    ELSE    ${statusCode}!=0    log    获取指定公文的信息失败

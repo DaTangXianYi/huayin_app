@@ -1,0 +1,73 @@
+*** Settings ***
+Documentation     登录接口
+Test Timeout      2 minutes    # 2分钟
+Library           RequestsLibrary
+Library           Collections
+Library           DatabaseLibrary
+Library           OperatingSystem
+Resource          ../业务关键字.txt
+
+*** Variables ***
+${login_name}     zhangsan    # 用户名
+${password}       123321    # 密码
+${papandid}       888888888    # 平台id
+
+*** Test Cases ***
+LoginInfo_01
+    [Documentation]    登录成功
+    [Timeout]    1 minute    # 1分钟
+    Set Environment Variable    NLS_LANG    SIMPLIFIED_CHINESE_CHINA_UTF8
+    Create Session    api    http://192.168.26.35:8080
+    ${addr}    get request    api    hyoa/camel/mapi/mobileRestWebService/login_info?password=${password}&login_name=${login_name}&papandid=${papandid}
+    Should Be Equal As Integers    ${addr.status_code}    200
+    log    ${addr.content}
+    ${responsedata}    to json    ${addr.content}
+    ${keys}    Get Dictionary Keys    ${responsedata}
+    ${items}    Get Dictionary items    ${responsedata}
+    ${values}    Get Dictionary values    ${responsedata}
+    ${id-0}    get from dictionary    ${responsedata}    id
+    ${loginName}    get from dictionary    ${responsedata}    loginName
+    ${description}    get from dictionary    ${responsedata}    description
+    ${status}    get from dictionary    ${responsedata}    status
+    Connect To Database Using Custom Params    cx_Oracle    'hyoa_app','hyoa_app','192.168.20.12:1521/jreap_dev'
+    ${rs}    Query    select t.id from SECURITY_ACCOUNT t WHERE t.login_name='${loginName}'
+    ${id-1}    Set Variable    ${rs[0][0]}
+    Disconnect From Database
+    Should Be Equal As Strings    ${id-1}    ${id-0}
+    Run Keyword if    ${status}==1 and ${addr.status_code}==200    log    登录成功
+    ...    ELSE IF    ${status}!=1 and ${addr.status_code}!=200    log    登录失败
+    Delete All Sessions
+
+LoginInfo_02
+    [Documentation]    登录成功：分层
+    [Timeout]    1 minute    # 1分钟
+    UTF8Environment
+    SessionCreate    http://192.168.26.35:8080
+    RequestGet    hyoa/camel/mapi/mobileRestWebService/login_info?password=${password}&login_name=${login_name}&papandid=${papandid}    200
+    ReturnParameter    id    loginName    description    status
+    OracleConnect    'hyoa_app','hyoa_app','192.168.20.12:1521/jreap_dev'    select t.id from SECURITY_ACCOUNT t WHERE t.login_name='${loginName}'
+    InquireDatabase
+    Disconnect From Database
+    JudgeCondition    ${status}==1 and ${addr.status_code}==200    ${status}!=1 and ${addr.status_code}!=200
+    Delete All Sessions
+
+*** Keywords ***
+ReturnParameter
+    [Arguments]    ${a}    ${b}    ${c}    ${d}
+    ${responsedata}    to json    ${addr.content}
+    ${keys}    Get Dictionary Keys    ${responsedata}
+    ${items}    Get Dictionary items    ${responsedata}
+    ${values}    Get Dictionary values    ${responsedata}
+    ${id}    get from dictionary    ${responsedata}    ${a}
+    ${loginName}    get from dictionary    ${responsedata}    ${b}
+    ${description}    get from dictionary    ${responsedata}    ${c}
+    ${status}    get from dictionary    ${responsedata}    ${d}
+
+InquireDatabase
+    ${id-1}    Set Variable    ${rs[0][0]}
+    Should Be Equal As Strings    ${id-1}    ${id-0}
+
+JudgeCondition
+    [Arguments]    ${conditions-1}    ${conditions-2}
+    Run Keyword if    ${conditions-1}    log    登录成功
+    ...    ELSE IF    ${conditions-2}    log    登录失败

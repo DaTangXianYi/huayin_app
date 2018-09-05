@@ -1,0 +1,75 @@
+*** Settings ***
+Test Timeout      2 minutes    # 2分钟
+Library           RequestsLibrary
+Library           Collections
+Library           DatabaseLibrary
+Resource          ../业务关键字.txt
+Library           OperatingSystem
+
+*** Variables ***
+${talkId}         01089cb7-841b-49ab-8d94-54a7c749ce37    # 任务ID
+${resultConfirm}    资料不全    # 驳回意见
+${taskonfirmAccname}    高卫卫    # 驳回人
+
+*** Test Cases ***
+SubmitBack_01
+    Set Environment Variable    NLS_LANG    SIMPLIFIED_CHINESE_CHINA_UTF8
+    Create Session    api    http://192.168.25.16:8099
+    ${addr}    Get Request    api    hyoa/camel/mapi/hyoaMobileService/SubmitBack?talkId=${talkId}&resultConfirm=${resultConfirm}&taskonfirmAccname=${taskonfirmAccname}
+    Should Be Equal As Integers    ${addr.status_code}    200
+    ${responsedata}    to json    ${addr.content}
+    ${keys}    Get Dictionary Keys    ${responsedata}
+    ${items}    Get Dictionary Keys    ${responsedata}
+    ${values}    Get Dictionary Keys    ${responsedata}
+    ${flag}    get from dictionary    ${responsedata}    flag
+    ${exception}    get from dictionary    ${responsedata}    exception
+    ${statusCode}    get from dictionary    ${responsedata}    statusCode
+    Connect To Database Using Custom Params    cx_Oracle    'hyoa20180602','hyoa20180602','192.168.25.11:1521/devorcl'
+    ${rs}    Query    select (select a.id from hyoa_task_info a WHERE a.id='${talkId}') as talkId,(select t.name from SECURITY_ACCOUNT t WHERE t.name='${taskonfirmAccname}') as taskonfirmAccname FROM BPM_HI_ACTIVITY_EVENT d where rownum=1
+    ${talkId-1}    Set Variable    ${rs[0][0]}
+    ${taskonfirmAccname-1}    decode    ${rs[0][1]}    GBK
+    Should Be Equal As Strings    ${talkId-1}    ${talkId}
+    Should Be Equal As Strings    ${taskonfirmAccname-1}    ${taskonfirmAccname}
+    Disconnect From Database
+    Run Keyword If    ${addr.status_code}==200 and '${flag}'=='success' and '${exception}'=='' and ${statusCode}==0    log    任务驳回成功
+    ...    ELSE IF    ${addr.status_code}!=200    log    任务驳回失败
+    ...    ELSE IF    '${flag}'=='flase'    log    任务驳回失败
+    ...    ELSE IF    '${exception}'!=''    log    任务驳回失败
+    ...    ELSE    ${statusCode}!=0    log    任务驳回失败
+    Delete All Sessions
+
+SubmitBack_02
+    UTF8环境
+    Session创建    http://192.168.25.16:8099
+    Get请求    hyoa/camel/mapi/hyoaMobileService/SubmitBack?talkId=${talkId}&resultConfirm=${resultConfirm}&taskonfirmAccname=${taskonfirmAccname}    200
+    任务驳回返回的参数    flag    exception    statusCode
+    Oracle连接    ''hyoa20180602','hyoa20180602','192.168.25.11:1521/devorcl'    select (select a.id from hyoa_task_info a WHERE a.id='${talkId}') as talkId,(select t.name from SECURITY_ACCOUNT t WHERE t.name='${taskonfirmAccname}') as taskonfirmAccname FROM BPM_HI_ACTIVITY_EVENT d where rownum=1
+    任务驳回查询数据库
+    Disconnect From Database
+    任务驳回判断条件    ${addr.status_code}==200 and '${flag}'=='success' and '${exception}'=='' and ${statusCode}==0    ${addr.status_code}!=200    '${flag}'=='flase'    '${exception}'!=''    ${statusCode}!=0
+    Delete All Sessions
+
+*** Keywords ***
+任务驳回返回的参数
+    [Arguments]    ${a}    ${b}    ${c}
+    ${responsedata}    to json    ${addr.content}
+    ${keys}    Get Dictionary Keys    ${responsedata}
+    ${items}    Get Dictionary Keys    ${responsedata}
+    ${values}    Get Dictionary Keys    ${responsedata}
+    ${flag}    get from dictionary    ${responsedata}    ${a}
+    ${exception}    get from dictionary    ${responsedata}    ${b}
+    ${statusCode}    get from dictionary    ${responsedata}    ${c}
+
+任务驳回查询数据库
+    ${talkId-1}    Set Variable    ${rs[0][0]}
+    ${taskonfirmAccname-1}    decode    ${rs[0][1]}    GBK
+    Should Be Equal As Strings    ${talkId-1}    ${talkId}
+    Should Be Equal As Strings    ${taskonfirmAccname-1}    ${taskonfirmAccname}
+
+任务驳回判断条件
+    [Arguments]    ${conditions-1}    ${conditions-2}    ${conditions-3}    ${conditions-4}    ${conditions-5}
+    Run Keyword If    ${conditions-1}    log    获取指定公文类别的公文成功
+    ...    ELSE IF    ${conditions-2}    log    获取指定公文类别的公文失败
+    ...    ELSE IF    ${conditions-3}    log    获取指定公文类别的公文失败
+    ...    ELSE IF    ${conditions-4}    log    获取指定公文类别的公文失败
+    ...    ELSE    ${conditions-5}    log    获取指定公文类别的公文失败

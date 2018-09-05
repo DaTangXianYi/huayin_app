@@ -1,0 +1,61 @@
+*** Settings ***
+Documentation     通讯录详情
+Test Timeout      2 minutes    # 2分钟
+Library           RequestsLibrary
+Library           Collections
+Library           DatabaseLibrary
+Library           OperatingSystem
+Resource          ../业务关键字.txt
+
+*** Variables ***
+${keyName}        苏靖
+${id}             8a686a66609c7edd0160a0264d0d0001
+
+*** Test Cases ***
+QueryAddress_01
+    [Documentation]    通讯录详情成功
+    [Timeout]    1 minute    # 1分钟
+    Set Environment Variable    NLS_LANG    SIMPLIFIED_CHINESE_CHINA_UTF8
+    Create Session    api    http://192.168.26.35:8080
+    ${addr}    get request    api    hyoa/camel/mapi/hyoaMobileService/QueryAddress?keyName=${keyName}&id=${id}
+    Should Be Equal As Strings    ${addr.status_code}    200    #判断请求响应是否为200，服务器成功返回网页
+    ${responsedate}    to json    ${addr.content}    #使用to json将string转换为json串
+    ${keys}    Get Dictionary Keys    ${responsedate}
+    ${dict0}    get from list    ${responsedate}    0
+    ${deptId}    get from dictionary    ${dict0}    deptId
+    ${name}    get from dictionary    ${dict0}    name
+    ${mobile}    get from dictionary    ${dict0}    mobile
+    ${description}    get from dictionary    ${dict0}    description
+    Connect To Database Using Custom Params    cx_Oracle    'hyoa_app','hyoa_app','192.168.20.12:1521/jreap_dev'
+    ${result}    Query    select name from security_employee t where t.account_id='${id}'
+    ${resultDecode}    Decode    ${result[0][0]}    GBK
+    Should Be Equal As Strings    ${name}    ${resultDecode}
+    Disconnect From Database
+    Delete All Sessions
+
+QueryAddress_02
+    [Documentation]    通讯录详情:分层
+    [Template]    RequestGet
+    [Timeout]    1 minute    # 1分钟
+    UTF8Environment
+    SessionCreate    http://192.168.26.35:8080
+    RequestGet    hyoa/camel/mapi/hyoaMobileService/QueryAddress?keyName=${keyName}&id=${id}    200
+    ReturnParameter    deptId    name    mobile    description
+    OracleConnect    'hyoa_app','hyoa_app','192.168.20.12:1521/jreap_dev'    select name from security_employee t    where t.account_id=${id}
+    InquireDatabase
+    Disconnect From Database
+    Delete All Sessions
+
+*** Keywords ***
+ReturnParameter
+    [Arguments]    ${a}    ${b}    ${c}    ${d}
+    ${keys}    Get Dictionary Keys    ${responsedate}
+    ${dict0}    get from list    ${responsedate}    0
+    ${deptId}    get from dictionary    ${dict0}    ${a}
+    ${name}    get from dictionary    ${dict0}    ${b}
+    ${mobile}    get from dictionary    ${dict0}    ${c}
+    ${description}    get from dictionary    ${dict0}    ${d}
+
+InquireDatabase
+    ${resultDecode}    Decode    ${rs[0][0]}    GBK
+    Should Be Equal As Strings    ${name}    ${resultDecode}

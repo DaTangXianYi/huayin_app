@@ -1,0 +1,101 @@
+*** Settings ***
+Documentation     获取公文节点的处理人
+Test Timeout      2 minutes    # 2分钟
+Library           RequestsLibrary
+Library           Collections
+Library           DatabaseLibrary
+Library           OperatingSystem
+Resource          ../业务关键字.txt
+
+*** Variables ***
+${docId}          003774e6-1871-47fe-b225-917d28708ee2    # 公文ID
+${dispaOrReceipt}    fwPro    # 发文:fwPro;收文:swPro;签报:qbPro
+${taskId}         8a686a69584d42870158522109b3001b    # 任务ID
+${accountId}      ff8080816218fa3801626f5e554c00e0    # 平台用户ID
+
+*** Test Cases ***
+QueryDocCurrPerson_01
+    [Documentation]    获取公文节点的处理人成功
+    [Timeout]    1 minute    # 1分钟
+    Set Environment Variable    NLS_LANG    SIMPLIFIED_CHINESE_CHINA_UTF8
+    Create Session    api    http://192.168.26.35:8080
+    ${addr}    Get Request    api    hyoa/camel/mapi/hyoaMobileService/QueryDocCurrPerson?docId=${docId}&dispaOrReceipt=${dispaOrReceipt}&taskId=${taskId}&accountId=${accountId}
+    Should Be Equal As Integers    ${addr.status_code}    200
+    ${responsedata}    to json    ${addr.content}
+    ${keys}    Get Dictionary Keys    ${responsedata}
+    ${items}    Get Dictionary Keys    ${responsedata}
+    ${values}    Get Dictionary Keys    ${responsedata}
+    ${flag}    get from dictionary    ${responsedata}    flag
+    ${exception}    get from dictionary    ${responsedata}    exception
+    ${statusCode}    get from dictionary    ${responsedata}    statusCode
+    ${result}    get from dictionary    ${responsedata}    result
+    ${id}    get from dictionary    ${result}    id
+    ${name}    get from dictionary    ${result}    name
+    ${dept}    get from dictionary    ${result}    dept
+    ${orderno}    get from dictionary    ${result}    orderno
+    ${accountId-1}    get from dictionary    ${result}    accountId
+    Connect To Database Using Custom Params    cx_Oracle    'hyoa_app','hyoa_app','192.168.20.12:1521/jreap_dev'
+    ${rs}    Query    select (select t.id from HYOA_DOC_DISPATCH t WHERE t.id='${docId}') as docId,(select t.id from BPM_RU_TASK t WHERE t.id='${taskId}') as taskId,(select t.description from SECURITY_ACCOUNT t where t.description='${accountId}') as accountId FROM BPM_HI_ACTIVITY_EVENT d where rownum=1
+    ${docId-1}    Set Variable    ${rs[0][0]}
+    ${taskId-1}    Set Variable    ${rs[0][1]}
+    ${accountId-2}    Set Variable    ${rs[0][2]}
+    Should Be Equal As Strings    ${docId-1}    ${docId}
+    Should Be Equal As Strings    ${taskId-1}    ${taskId}
+    Should Be Equal As Strings    ${accountId-2}    ${accountId}
+    Disconnect From Database
+    Run Keyword If    ${addr.status_code}==200 and '${flag}'=='success' and '${exception}'=='' and ${statusCode}==0    log    获取公文节点的处理人成功
+    ...    ELSE IF    ${addr.status_code}!=200    log    获取公文节点的处理人失败
+    ...    ELSE IF    '${flag}'=='flase'    log    获取公文节点的处理人失败
+    ...    ELSE IF    '${exception}'!=''    log    获取公文节点的处理人失败
+    ...    ELSE    ${statusCode}!=0    log    获取公文节点的处理人失败
+    Delete All Sessions
+
+QueryDocCurrPerson_02
+    [Documentation]    获取公文节点的处理人成功:分层
+    [Template]    RequestGet
+    [Timeout]    1 minute    # 1分钟
+    UTF8Environment
+    SessionCreate    http://192.168.26.35:8080
+    RequestGet    hyoa/camel/mapi/hyoaMobileService/QueryDocCurrPerson?docId=${docId}&dispaOrReceipt=${dispaOrReceipt}&taskId=${taskId}&accountId=${accountId}    200
+    ReturnParameter    flag    exception    statusCode    result    id    name
+    ...    dept    orderno    accountId
+    OracleConnect    'hyoa_app','hyoa_app','192.168.20.12:1521/jreap_dev'    select (select t.id from HYOA_DOC_DISPATCH t WHERE t.id='${docId}') as docId,(select t.id from BPM_RU_TASK t WHERE t.id='${taskId}') as taskId,(select t.description from SECURITY_ACCOUNT t where t.description='${accountId}') as accountId FROM BPM_HI_ACTIVITY_EVENT d where rownum=1
+    InquireDatabase
+    Disconnect From Database
+    JudgeCondition    ${addr.status_code}==200 and '${flag}'=='success' and '${exception}'=='' and ${statusCode}==0    ${addr.status_code}!=200    '${flag}'=='flase'    '${exception}'!=''    ${statusCode}!=0
+    Delete All Sessions
+
+*** Keywords ***
+ReturnParameter
+    [Arguments]    ${a}    ${b}    ${c}    ${d}    ${e}    ${f}
+    ...    ${g}    ${h}    ${i}
+    ${responsedata}    to json    ${addr.content}
+    ${keys}    Get Dictionary Keys    ${responsedata}
+    ${items}    Get Dictionary Keys    ${responsedata}
+    ${values}    Get Dictionary Keys    ${responsedata}
+    ${flag}    get from dictionary    ${responsedata}    ${a}
+    ${exception}    get from dictionary    ${responsedata}    ${b}
+    ${statusCode}    get from dictionary    ${responsedata}    ${c}
+    ${result}    get from dictionary    ${responsedata}    ${d}
+    ${id}    get from dictionary    ${result}    ${e}
+    ${name}    get from dictionary    ${result}    ${f}
+    ${dept}    get from dictionary    ${result}    ${g}
+    ${orderno}    get from dictionary    ${result}    ${h}
+    ${accountId-1}    get from dictionary    ${result}    ${i}
+
+InquireDatabase
+    ${docId-1}    Set Variable    ${rs[0][0]}
+    ${taskId-1}    Set Variable    ${rs[0][1]}
+    ${accountId-2}    Set Variable    ${rs[0][2]}
+    Disconnect From Database
+    Should Be Equal As Strings    ${docId-1}    ${docId}
+    Should Be Equal As Strings    ${taskId-1}    ${taskId}
+    Should Be Equal As Strings    ${accountId-2}    ${accountId}
+
+JudgeCondition
+    [Arguments]    ${conditions-1}    ${conditions-2}    ${conditions-3}    ${conditions-4}    ${conditions-5}
+    Run Keyword If    ${conditions-1}    log    获取公文节点的处理人成功
+    ...    ELSE IF    ${conditions-2}    log    获取公文节点的处理人失败
+    ...    ELSE IF    ${conditions-3}    log    获取公文节点的处理人失败
+    ...    ELSE IF    ${conditions-4}    log    获取公文节点的处理人失败
+    ...    ELSE    ${conditions-5}    log    获取公文节点的处理人失败

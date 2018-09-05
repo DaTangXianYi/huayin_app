@@ -1,0 +1,102 @@
+*** Settings ***
+Documentation     收回接口
+Test Timeout      2 minutes    # 2分钟
+Library           HttpLibrary.HTTP
+Library           RequestsLibrary
+Library           Collections
+Library           DatabaseLibrary
+Library           OperatingSystem
+Resource          ../业务关键字.txt
+
+*** Variables ***
+${processInstanceId}    75a8119c-f68f-433c-ac21-1b185b3d0f45    # 任务id
+${type}           1    # 类型
+
+*** Test Cases ***
+flowHistory_01
+    [Documentation]    收回接口
+    [Timeout]    1 minute    # 1分钟
+    Set Environment Variable    NLS_LANG    SIMPLIFIED_CHINESE_CHINA_UTF8
+    Create Session    api    http://192.168.26.35:8080
+    ${addr}    Get Request    api    hyoa/camel/mapi/terminalRestService/flowHistory?processInstanceId=${processInstanceId}&type=${type}
+    Should Be Equal As Integers    ${addr.status_code}    200
+    ${responsedata}    to json    ${addr.content}
+    ${keys}    Get Dictionary Keys    ${responsedata}
+    ${items}    Get Dictionary Keys    ${responsedata}
+    ${values}    Get Dictionary Keys    ${responsedata}
+    ${currpage}    get from dictionary    ${responsedata}    currpage
+    ${totalpages}    get from dictionary    ${responsedata}    totalpages
+    ${totalrecords}    get from dictionary    ${responsedata}    totalrecords
+    ${rows}    get from dictionary    ${responsedata}    rows
+    ${id}    get from dictionary    ${rows[0]}    id
+    ${activityName}    get from dictionary    ${rows[0]}    activityName
+    ${endTime}    get from dictionary    ${rows[0]}    endTime
+    ${accountName}    get from dictionary    ${rows[0]}    accountName
+    ${accountId}    get from dictionary    ${rows[0]}    accountId
+    ${comment}    get from dictionary    ${rows[0]}    comment
+    Connect To Database Using Custom Params    cx_Oracle    'hyoa_app','hyoa_app','192.168.20.12:1521/jreap_dev'
+    ${rs}    Query    select (select a.PROCESSINSTANCEID from BPM_RU_TASK a WHERE a.PROCESSINSTANCEID='${processInstanceId}' and rownum=1) as processInstanceId,(select b.ID from BPM_HI_ACTIVITY_EVENT b WHERE b.ID='${id}') as id,(select b.ACTIVITY_NAME from BPM_HI_ACTIVITY_EVENT b WHERE b.ID='${id}') as activityName,(select b.EXECUTION_TIME from BPM_HI_ACTIVITY_EVENT b WHERE b.ID='${id}') as endTime,(select c.name from bpm_account c WHERE c.ID='${accountId}') as accountName from BPM_HI_ACTIVITY_EVENT b where b.process_instance_id='${processInstanceId}' and b.is_for_monitor=1 AND rownum=1 order by b.end_time,b.handler_descrip,b.event_name,b.account_id
+    ${processInstanceId-1}    Set Variable    ${rs[0][0]}
+    ${id-1}    Set Variable    ${rs[0][1]}
+    ${activityName-1}    decode    ${rs[0][2]}    GBK
+    ${endTime-1}    Set Variable    ${rs[0][3]}
+    ${accountName-1}    decode    ${rs[0][4]}    GBK
+    Should Be Equal As Strings    ${processInstanceId-1}    ${processInstanceId}
+    Should Be Equal As Strings    ${id-1}    ${id}
+    Should Be Equal As Strings    ${activityName-1}    ${activityName}
+    Should Be Equal As Strings    ${endTime-1}    ${endTime}
+    Should Be Equal As Strings    ${accountName-1}    ${accountName}
+    Disconnect From Database
+    Run Keyword If    ${addr.status_code}==200    log    收回成功
+    ...    ELSE IF    ${addr.status_code}!=200    log    收回失败
+    Delete All Sessions
+
+flowHistory_02
+    [Documentation]    收回接口成功：分层
+    [Timeout]    1 minute    # 1分钟
+    UTF8Environment
+    SessionCreate    http://192.168.26.35:8080
+    RequestGet    hyoa/camel/mapi/terminalRestService/flowHistory?processInstanceId=${processInstanceId}&type=${type}    200
+    ReturnParameter    currpage    totalpages    totalrecords    rows    id    activityName
+    ...    endTime    accountName    accountId    comment
+    OracleConnect    'hyoa_app','hyoa_app','192.168.20.12:1521/jreap_dev'    select (select a.PROCESSINSTANCEID from BPM_RU_TASK a WHERE a.PROCESSINSTANCEID='${processInstanceId}' and rownum=1) as processInstanceId,(select b.ID from BPM_HI_ACTIVITY_EVENT b WHERE b.ID='${id}') as id,(select b.ACTIVITY_NAME from BPM_HI_ACTIVITY_EVENT b WHERE b.ID='${id}') as activityName,(select b.EXECUTION_TIME from BPM_HI_ACTIVITY_EVENT b WHERE b.ID='${id}') as endTime,(select c.name from bpm_account c WHERE c.ID='${accountId}') as accountName from BPM_HI_ACTIVITY_EVENT b where b.process_instance_id='${processInstanceId}' and b.is_for_monitor=1 AND rownum=1 order by b.end_time,b.handler_descrip,b.event_name,b.account_id
+    InquireDatabase
+    Disconnect From Database
+    JudgeCondition    ${addr.status_code}==200    ${addr.status_code}!=200
+    Delete All Sessions
+
+*** Keywords ***
+ReturnParameter
+    [Arguments]    ${a}    ${b}    ${c}    ${d}    ${e}    ${f}
+    ...    ${g}    ${h}    ${i}    ${j}
+    ${responsedata}    to json    ${addr.content}
+    ${keys}    Get Dictionary Keys    ${responsedata}
+    ${items}    Get Dictionary Keys    ${responsedata}
+    ${values}    Get Dictionary Keys    ${responsedata}
+    ${currpage}    get from dictionary    ${responsedata}    ${a}
+    ${totalpages}    get from dictionary    ${responsedata}    ${b}
+    ${totalrecords}    get from dictionary    ${responsedata}    ${c}
+    ${rows}    get from dictionary    ${responsedata}    ${d}
+    ${id}    get from dictionary    ${rows[0]}    ${e}
+    ${activityName}    get from dictionary    ${rows[0]}    ${f}
+    ${endTime}    get from dictionary    ${rows[0]}    ${g}
+    ${accountName}    get from dictionary    ${rows[0]}    ${h}
+    ${accountId}    get from dictionary    ${rows[0]}    ${i}
+    ${comment}    get from dictionary    ${rows[0]}    ${j}
+
+InquireDatabase
+    ${processInstanceId-1}    Set Variable    ${rs[0][0]}
+    ${id-1}    Set Variable    ${rs[0][1]}
+    ${activityName-1}    decode    ${rs[0][2]}    GBK
+    ${endTime-1}    Set Variable    ${rs[0][3]}
+    ${accountName-1}    decode    ${rs[0][4]}    GBK
+    Should Be Equal As Strings    ${processInstanceId-1}    ${processInstanceId}
+    Should Be Equal As Strings    ${id-1}    ${id}
+    Should Be Equal As Strings    ${activityName-1}    ${activityName}
+    Should Be Equal As Strings    ${endTime-1}    ${endTime}
+    Should Be Equal As Strings    ${accountName-1}    ${accountName}
+
+JudgeCondition
+    [Arguments]    ${conditions-1}    ${conditions-2}
+    Run Keyword If    ${conditions-1}    log    收回成功
+    ...    ELSE IF    ${conditions-2}    log    收回失败

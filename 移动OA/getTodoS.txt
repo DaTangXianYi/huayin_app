@@ -1,0 +1,73 @@
+*** Settings ***
+Documentation     制度库信息
+Test Timeout      2 minutes    # 2分钟
+Library           RequestsLibrary
+Library           Collections
+Library           DatabaseLibrary
+Library           OperatingSystem
+Resource          ../业务关键字.txt
+
+*** Variables ***
+${terId}          6b2afcd0-fa89-4428-915f-9d79afbe4a64    # 公文id
+${businessKey}    ProcessDefinition1471396169495:6b2afcd0-fa89-4428-915f-9d79afbe4a64    # 任务节点
+
+*** Test Cases ***
+getTodoS_01
+    [Documentation]    制度库信息成功
+    [Timeout]    1 minute    # 1分钟
+    Set Environment Variable    NLS_LANG    SIMPLIFIED_CHINESE_CHINA_UTF8
+    Create Session    api    http://192.168.26.35:8080
+    ${addr}    Get Request    api    hyoa/camel/mapi/hyoaMobileService/getTodoS?terId=${terId}&businessKey=${businessKey}
+    Should Be Equal As Integers    ${addr.status_code}    200
+    ${responsedata}    to json    ${addr.content}
+    ${id}    get from dictionary    ${responsedata[0]}    id
+    ${sender}    get from dictionary    ${responsedata[0]}    sender
+    ${taskId}    get from dictionary    ${responsedata[0]}    taskId
+    Connect To Database Using Custom Params    cx_Oracle    'hyoa_app','hyoa_app','192.168.20.12:1521/jreap_dev'
+    ${rs}    Query    select (select t.doc_id from Hyoa_Rules t WHERE t.doc_id='${terId}') as terId,(select t.id from HYOA_DOC_DISPATCH t WHERE t.id='${terId}') as id,(select t.id from BPM_RU_TASK t WHERE t.business_key='${businessKey}'and t.id='${taskId}') as taskId FROM BPM_HI_ACTIVITY_EVENT d where rownum=1
+    ${terId-1}    Set Variable    ${rs[0][0]}
+    ${id-1}    Set Variable    ${rs[0][1]}
+    ${taskId-1}    Set Variable    ${rs[0][2]}
+    Should Be Equal As Strings    ${terId-1}    ${terId}
+    Should Be Equal As Strings    ${id-1}    ${id}
+    Should Be Equal As Strings    ${taskId-1}    ${taskId}
+    Disconnect From Database
+    Run Keyword If    ${addr.status_code}==200 and '${sender}'=='fwPro'    log    查询制度库信息成功
+    ...    ELSE IF    ${addr.status_code}!=200    log    查询制度库信息失败
+    ...    ELSE IF    '${sender}'!='fwPro'    log    查询制度库信息失败,因为这不是发文数据
+    Delete All Sessions
+
+getTodoS_02
+    [Documentation]    制度库信息成功：分层
+    [Timeout]    1 minute    # 1分钟
+    UTF8Environment
+    SessionCreate    http://192.168.26.35:8080
+    RequestGet    hyoa/camel/mapi/hyoaMobileService/getTodoS?terId=${terId}&businessKey=${businessKey}    200
+    ReturnParameter    id    sender    taskId
+    OracleConnect    'hyoa_app','hyoa_app','192.168.20.12:1521/jreap_dev'    select (select t.doc_id from Hyoa_Rules t WHERE t.doc_id='${terId}') as terId,(select t.id from HYOA_DOC_DISPATCH t WHERE t.id='${terId}') as id,(select t.id from BPM_RU_TASK t WHERE t.business_key='${businessKey}'and t.id='${taskId}') as taskId FROM BPM_HI_ACTIVITY_EVENT d where rownum=1
+    InquireDatabase
+    Disconnect From Database
+    JudgeCondition    ${addr.status_code}==200 and '${sender}'=='fwPro'    ${addr.status_code}!=200    '${sender}'!='fwPro'
+    Delete All Sessions
+
+*** Keywords ***
+ReturnParameter
+    [Arguments]    ${a}    ${b}    ${c}
+    ${responsedata}    to json    ${addr.content}
+    ${id}    get from dictionary    ${responsedata[0]}    ${a}
+    ${sender}    get from dictionary    ${responsedata[0]}    ${b}
+    ${taskId}    get from dictionary    ${responsedata[0]}    ${c}
+
+InquireDatabase
+    ${terId-1}    Set Variable    ${rs[0][0]}
+    ${id-1}    Set Variable    ${rs[0][1]}
+    ${taskId-1}    Set Variable    ${rs[0][2]}
+    Should Be Equal As Strings    ${terId-1}    ${terId}
+    Should Be Equal As Strings    ${id-1}    ${id}
+    Should Be Equal As Strings    ${taskId-1}    ${taskId}
+
+JudgeCondition
+    [Arguments]    ${conditions-1}    ${conditions-2}    ${conditions-3}
+    Run Keyword If    ${conditions-1}    log    查询制度库信息成功
+    ...    ELSE IF    ${conditions-2}    log    查询制度库信息失败
+    ...    ELSE IF    ${conditions-3}    log    查询制度库信息失败,因为这不是发文数据

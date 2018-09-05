@@ -1,0 +1,124 @@
+*** Settings ***
+Documentation     任务详情
+Test Timeout      2 minutes    # 2分钟
+Library           RequestsLibrary
+Library           Collections
+Library           DatabaseLibrary
+Library           OperatingSystem
+Resource          ../业务关键字.txt
+
+*** Variables ***
+${accountId}      ff80808164d0c86d0164ede9870f003c    # 用户ID
+${talkId}         7139cc01-bebe-44ab-a100-3180aa942603    # 任务ID
+
+*** Test Cases ***
+getTerminalTalkByTid_01
+    [Documentation]    任务详情成功
+    [Timeout]    1 minute    # 1分钟
+    Set Environment Variable    NLS_LANG    SIMPLIFIED_CHINESE_CHINA_UTF8
+    Create Session    api    http://192.168.26.35:8080
+    ${addr}    Get Request    api    hyoa/camel/mapi/terminalRestService/getTerminalTalkByTid?accountId=${accountId}&talkId=${talkId}
+    Should Be Equal As Integers    ${addr.status_code}    200
+    ${responsedata}    to json    ${addr.content}
+    ${keys}    Get Dictionary Keys    ${responsedata}
+    ${items}    Get Dictionary Keys    ${responsedata}
+    ${values}    Get Dictionary Keys    ${responsedata}
+    ${flag}    get from dictionary    ${responsedata}    flag
+    ${exception}    get from dictionary    ${responsedata}    exception
+    ${statusCode}    get from dictionary    ${responsedata}    statusCode
+    ${result}    get from dictionary    ${responsedata}    result
+    ${id}    get from dictionary    ${result}    id
+    ${title}    get from dictionary    ${result}    title
+    ${receivePersonName}    get from dictionary    ${result}    receivePersonName
+    ${deployPersonId}    get from dictionary    ${result}    deployPersonId
+    ${startTime}    get from dictionary    ${result}    startTime
+    ${endTime}    get from dictionary    ${result}    endTime
+    ${taskTypeName2}    get from dictionary    ${result}    taskTypeName2
+    ${content}    get from dictionary    ${result}    content
+    Connect To Database Using Custom Params    cx_Oracle    'hyoa_app','hyoa_app','192.168.20.12:1521/jreap_dev'
+    ${rs}    Query    select (select a.description from SECURITY_ACCOUNT a WHERE a.description='${accountId}' and rownum=1) as accountId,(select b.id from hyoa_task_info b WHERE b.ID='${talkId}') as talkId,(select b.id from hyoa_task_info b WHERE b.iD='${talkId}') as id,(select b.title from hyoa_task_info b WHERE b.iD='${talkId}') as title,(select c.receive_person_id from hyoa_task_receiver c WHERE c.iD='${talkId}') as receivePersonName,(select b.deploy_person_id from hyoa_task_info b WHERE b.iD='${talkId}') as deployPersonId,(select \ b.start_time from hyoa_task_info b WHERE b.iD='${talkId}') as startTime,(select b.end_time from hyoa_task_info b WHERE b.iD='${talkId}') as endTimefrom FROM BPM_HI_ACTIVITY_EVENT d where rownum=1
+    ${accountId-1}    Set Variable    ${rs[0][0]}
+    ${talkId-1}    Set Variable    ${rs[0][1]}
+    ${id-1}    Set Variable    ${rs[0][2]}
+    ${title-1}    decode    ${rs[0][3]}    GBK
+    ${receivePersonName-1}    decode    ${rs[0][4]}    GBK
+    ${deployPersonId-1}    Set Variable    ${rs[0][5]}
+    ${startTime-1}    Set Variable    ${rs[0][6]}
+    ${endTime-1}    Set Variable    ${rs[0][7]}
+    Should Be Equal As Strings    ${accountId-1}    ${accountId}
+    Should Be Equal As Strings    ${talkId-1}    ${talkId}
+    Should Be Equal As Strings    ${id-1}    ${id}
+    Should Be Equal As Strings    ${title-1}    ${title}
+    Should Be Equal As Strings    ${receivePersonName-1}    ${receivePersonName}
+    Should Be Equal As Strings    ${deployPersonId-1}    ${deployPersonId}
+    Should Be Equal As Strings    ${startTime-1}    ${startTime}
+    Should Be Equal As Strings    ${endTime-1}    ${endTime}
+    Disconnect From Database
+    Run Keyword If    ${addr.status_code}==200 and '${flag}'=='success' and '${exception}'=='' and ${statusCode}==0    log    查询任务详情成功
+    ...    ELSE IF    ${addr.status_code}!=200    log    查询任务详情失败
+    ...    ELSE IF    '${flag}'=='flase'    log    查询任务详情失败
+    ...    ELSE IF    '${exception}'!=''    log    查询任务详情失败
+    ...    ELSE    ${statusCode}!=0    log    查询任务详情失败
+    Delete All Sessions
+
+getTerminalTalkByTid_02
+    [Documentation]    任务详情成功：分层
+    [Timeout]    1 minute    # 1分钟
+    UTF8Environment
+    SessionCreate    http://192.168.26.35:8080
+    RequestGet    hyoa/camel/mapi/terminalRestService/getTerminalTalkByTid?accountId=${accountId}&talkId=${talkId}    200
+    ReturnParameter    flag    exception    statusCode    result    id    id
+    ...    title    receivePersonName    deployPersonId    startTime    endTime    taskTypeName2
+    ...    content
+    OracleConnect    'hyoa_app','hyoa_app','192.168.20.12:1521/jreap_dev'    select (select a.description from SECURITY_ACCOUNT a WHERE a.description='${accountId}' and rownum=1) as accountId,(select b.id from hyoa_task_info b WHERE b.ID='${talkId}') as talkId,(select b.id from hyoa_task_info b WHERE b.iD='${talkId}') as id,(select b.title from hyoa_task_info b WHERE b.iD='${talkId}') as title,(select c.receive_person_id from hyoa_task_receiver c WHERE c.iD='${talkId}') as receivePersonName,(select b.deploy_person_id from hyoa_task_info b WHERE b.iD='${talkId}') as deployPersonId,(select \ b.start_time from hyoa_task_info b WHERE b.iD='${talkId}') as startTime,(select b.end_time from hyoa_task_info b WHERE b.iD='${talkId}') as endTimefrom FROM BPM_HI_ACTIVITY_EVENT d where rownum=1
+    InquireDatabase
+    Disconnect From Database
+    JudgeCondition    ${addr.status_code}==200 and '${flag}'=='success' and '${exception}'=='' and ${statusCode}==0    ${addr.status_code}!=200    '${flag}'=='flase'    '${exception}'!=''    ${statusCode}!=0
+    Delete All Sessions
+
+*** Keywords ***
+ReturnParameter
+    [Arguments]    ${a}    ${b}    ${c}    ${d}    ${e}    ${f}
+    ...    ${g}    ${h}    ${i}    ${j}    ${k}    ${l}
+    ${responsedata}    to json    ${addr.content}
+    ${keys}    Get Dictionary Keys    ${responsedata}
+    ${items}    Get Dictionary Keys    ${responsedata}
+    ${values}    Get Dictionary Keys    ${responsedata}
+    ${flag}    get from dictionary    ${responsedata}    ${a}
+    ${exception}    get from dictionary    ${responsedata}    ${b}
+    ${statusCode}    get from dictionary    ${responsedata}    ${c}
+    ${result}    get from dictionary    ${responsedata}    ${d}
+    ${id}    get from dictionary    ${result}    ${e}
+    ${title}    get from dictionary    ${result}    ${f}
+    ${receivePersonName}    get from dictionary    ${result}    ${g}
+    ${deployPersonId}    get from dictionary    ${result}    ${h}
+    ${startTime}    get from dictionary    ${result}    ${i}
+    ${endTime}    get from dictionary    ${result}    ${j}
+    ${taskTypeName2}    get from dictionary    ${result}    ${k}
+    ${content}    get from dictionary    ${result}    ${l}
+
+InquireDatabase
+    ${accountId-1}    Set Variable    ${rs[0][0]}
+    ${talkId-1}    Set Variable    ${rs[0][1]}
+    ${id-1}    Set Variable    ${rs[0][2]}
+    ${title-1}    decode    ${rs[0][3]}    GBK
+    ${receivePersonName-1}    decode    ${rs[0][4]}    GBK
+    ${deployPersonId-1}    Set Variable    ${rs[0][5]}
+    ${startTime-1}    Set Variable    ${rs[0][6]}
+    ${endTime-1}    Set Variable    ${rs[0][7]}
+    Should Be Equal As Strings    ${accountId-1}    ${accountId}
+    Should Be Equal As Strings    ${talkId-1}    ${talkId}
+    Should Be Equal As Strings    ${id-1}    ${id}
+    Should Be Equal As Strings    ${title-1}    ${title}
+    Should Be Equal As Strings    ${receivePersonName-1}    ${receivePersonName}
+    Should Be Equal As Strings    ${deployPersonId-1}    ${deployPersonId}
+    Should Be Equal As Strings    ${startTime-1}    ${startTime}
+    Should Be Equal As Strings    ${endTime-1}    ${endTime}
+
+JudgeCondition
+    [Arguments]    ${conditions-1}    ${conditions-2}    ${conditions-3}    ${conditions-4}    ${conditions-5}
+    Run Keyword If    ${conditions-1}    log    查询任务详情成功
+    ...    ELSE IF    ${conditions-2}    log    查询任务详情失败
+    ...    ELSE IF    ${conditions-3}    log    查询任务详情失败
+    ...    ELSE IF    ${conditions-4}    log    查询任务详情失败
+    ...    ELSE    ${conditions-5}    log    查询任务详情失败

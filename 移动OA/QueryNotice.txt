@@ -1,0 +1,110 @@
+*** Settings ***
+Documentation     获取公告列表
+Test Timeout      2 minutes    # 2分钟
+Library           RequestsLibrary
+Library           Collections
+Library           DatabaseLibrary
+Library           OperatingSystem
+Resource          ../业务关键字.txt
+
+*** Variables ***
+${userId}         ff808081651338140165138925af0007
+${pagesize}       10
+${page}           0
+${isOver}         0
+
+*** Test Cases ***
+QueryNotice_01
+    [Documentation]    获取公告列表成功
+    [Timeout]    1 minute    # 1分钟
+    Set Environment Variable    NLS_LANG    SIMPLIFIED_CHINESE_CHINA_UTF8
+    Create Session    api    http://192.168.26.35:8080
+    ${addr}    get request    api    hyoa/camel/mapi/terminalRestService/QueryNotice?userId=${userId}&isOver=${isOver}&page=${page}&pagesize=${pagesize}
+    Should Be Equal As Strings    ${addr.status_code}    200    #判断请求响应是否为200，服务器成功返回网页
+    ${responsedate}    to json    ${addr.content}    #使用to json将string转换为json串
+    ${keys}    Get Dictionary Keys    ${responsedate}
+    ${items}    Get Dictionary items    ${responsedate}
+    ${values}    Get Dictionary values    ${responsedate}
+    ${currpage}    get from dictionary    ${responsedate}    currpage
+    ${exception}    get from dictionary    ${responsedate}    exception
+    ${flag}    get from dictionary    ${responsedate}    flag
+    ${sidx}    get from dictionary    ${responsedate}    sidx
+    ${sord}    get from dictionary    ${responsedate}    sord
+    ${statusCode}    get from dictionary    ${responsedate}    statusCode
+    ${totalpages}    get from dictionary    ${responsedate}    totalpages
+    ${totalrecords}    get from dictionary    ${responsedate}    totalrecords
+    ${rows}    get from dictionary    ${responsedate}    rows
+    ${rows0}    get from list    ${rows}    0
+    ${noteId}    get from dictionary    ${rows0}    noteId
+    ${noteName}    get from dictionary    ${rows0}    noteName
+    ${noteContent}    get from dictionary    ${rows0}    noteContent
+    ${noteContentClob}    get from dictionary    ${rows0}    noteContentClob
+    ${publishPart}    get from dictionary    ${rows0}    publishPart
+    ${publishTime}    get from dictionary    ${rows0}    publishTime
+    ${publishName}    get from dictionary    ${rows0}    publishName
+    ${readType}    get from dictionary    ${rows0}    readType
+    ${imgurl}    get from dictionary    ${rows0}    imgurl
+    ${attFileVOList}    get from dictionary    ${rows0}    attFileVOList
+    ${attFileVOList0}    get from list    ${attFileVOList}    0
+    ${attFileId}    get from dictionary    ${attFileVOList0}    attFileId
+    ${attFileName}    get from dictionary    ${attFileVOList0}    attFileName
+    ${attFileBody}    get from dictionary    ${attFileVOList0}    attFileBody
+    ${fileSize}    get from dictionary    ${attFileVOList0}    fileSize
+    Run Keyword if    '${flag}'=='success'    log    查询成功
+    ...    ELSE    log    查询失败
+    Delete All Sessions
+
+QueryNotice_02
+    [Documentation]    获取公告列表成功:分层
+    [Template]    RequestGet
+    [Timeout]    1 minute    # 1分钟
+    UTF8Environment
+    SessionCreate    http://192.168.26.35:8080
+    RequestGet    hyoa/camel/mapi/hyoaMobileService/QueryAddress?keyName=${keyName}&id=${id}    200
+    ReturnParameter    currpage    exception    flag    sidx    sord    statusCode
+    ...    totalpages    totalrecords    rows    noteId    noteName    noteContent
+    ...    noteContentClob    publishPart    publishTime    publishName    readType    imgurl
+    ...    attFileVOList    attFileId    attFileName    attFileBody    fileSize
+    JudgeCondition    '${flag}'=='success'
+    Delete All Sessions
+
+*** Keywords ***
+ReturnParameter
+    [Arguments]    ${a}    ${b}    ${c}    ${d}    ${e}    ${f}
+    ...    ${g}    ${h}    ${i}    ${j}    ${k}    ${l}
+    ...    ${m}    ${n}    ${o}    ${p}    ${q}    ${r}
+    ...    ${s}    ${t}    ${u}    ${v}    ${w}
+    ${responsedate}    to json    ${addr.content}
+    ${keys}    Get Dictionary Keys    ${responsedate}
+    ${items}    Get Dictionary items    ${responsedate}
+    ${values}    Get Dictionary values    ${responsedate}
+    ${currpage}    get from dictionary    ${responsedate}    ${a}
+    ${exception}    get from dictionary    ${responsedate}    ${b}
+    ${flag}    get from dictionary    ${responsedate}    ${c}
+    ${sidx}    get from dictionary    ${responsedate}    ${d}
+    ${sord}    get from dictionary    ${responsedate}    ${e}
+    ${statusCode}    get from dictionary    ${responsedate}    ${f}
+    ${totalpages}    get from dictionary    ${responsedate}    ${g}
+    ${totalrecords}    get from dictionary    ${responsedate}    ${h}
+    ${rows}    get from dictionary    ${responsedate}    ${i}
+    ${rows0}    get from list    ${rows}    0
+    ${noteId}    get from dictionary    ${rows0}    ${j}
+    ${noteName}    get from dictionary    ${rows0}    ${k}
+    ${noteContent}    get from dictionary    ${rows0}    ${l}
+    ${noteContentClob}    get from dictionary    ${rows0}    ${m}
+    ${publishPart}    get from dictionary    ${rows0}    ${n}
+    ${publishTime}    get from dictionary    ${rows0}    ${o}
+    ${publishName}    get from dictionary    ${rows0}    ${p}
+    ${readType}    get from dictionary    ${rows0}    ${q}
+    ${imgurl}    get from dictionary    ${rows0}    ${r}
+    ${attFileVOList}    get from dictionary    ${rows0}    ${s}
+    ${attFileVOList0}    get from list    ${attFileVOList}    0
+    ${attFileId}    get from dictionary    ${attFileVOList0}    ${t}
+    ${attFileName}    get from dictionary    ${attFileVOList0}    ${u}
+    ${attFileBody}    get from dictionary    ${attFileVOList0}    ${v}
+    ${fileSize}    get from dictionary    ${attFileVOList0}    ${w}
+
+JudgeCondition
+    [Arguments]    ${conditions-1}
+    Run Keyword if    ${conditions-1}    log    查询成功
+    ...    ELSE IF    log    查询失败

@@ -1,0 +1,63 @@
+*** Settings ***
+Documentation     收回接口
+Test Timeout      2 minutes    # 2分钟
+Library           RequestsLibrary
+Library           Collections
+Library           DatabaseLibrary
+Library           OperatingSystem
+Resource          ../业务关键字.txt
+
+*** Variables ***
+${taskId}         8a686a6663d4067f0163ee118dd31090    # 任务id
+${userId}         55208e8c-dab4-4217-8827-11dd42b2ca5d    # 用户id
+
+*** Test Cases ***
+forceRecall_01
+    [Documentation]    收回接口成功
+    [Timeout]    1 minute    # 1分钟
+    Set Environment Variable    NLS_LANG    SIMPLIFIED_CHINESE_CHINA_UTF8
+    Create Session    api    http://192.168.26.35:8080
+    ${addr}    get request    api    hyoa/camel/mapi/terminalRestService/forceRecall?taskId=${taskId}&userId=${userId}
+    Should Be Equal As Strings    ${addr.status_code}    200
+    ${responsedate}    to json    ${addr.content}
+    ${keys}    Get Dictionary Keys    ${responsedate}
+    ${items}    Get Dictionary items    ${responsedate}
+    ${values}    Get Dictionary values    ${responsedate}
+    ${flag}    get from dictionary    ${responsedate}    flag
+    ${exception}    get from dictionary    ${responsedate}    exception
+    ${statusCode}    get from dictionary    ${responsedate}    statusCode
+    Run Keyword If    ${addr.status_code}==200 and '${flag}'=='success' and '${exception}'=='' and ${statusCode}==0    log    收回成功
+    ...    ELSE IF    ${addr.status_code}!=200    log    收回失败
+    ...    ELSE IF    '${flag}'=='flase'    log    收回失败
+    ...    ELSE IF    '${exception}'!=''    log    收回失败
+    ...    ELSE    ${statusCode}!=0    log    收回失败
+    Delete All Sessions
+
+forceRecall_02
+    [Documentation]    收回接口成功：分层
+    [Timeout]    1 minute    # 1分钟
+    UTF8Environment
+    SessionCreate    http://192.168.26.35:8080
+    RequestGet    hyoa/camel/mapi/terminalRestService/forceRecall?taskId=${taskId}&userId=${userId}    200
+    ReturnParameter    flag    exception    statusCode
+    JudgeCondition    ${addr.status_code}==200 and '${flag}'=='success' and '${exception}'=='' and ${statusCode}==0    ${addr.status_code}!=200    '${flag}'=='flase'    '${exception}'!=''    ${statusCode}!=0
+    Delete All Sessions
+
+*** Keywords ***
+ReturnParameter
+    [Arguments]    ${a}    ${b}    ${c}
+    ${responsedate}    to json    ${addr.content}
+    ${keys}    Get Dictionary Keys    ${responsedate}
+    ${items}    Get Dictionary items    ${responsedate}
+    ${values}    Get Dictionary values    ${responsedate}
+    ${flag}    get from dictionary    ${responsedate}    ${a}
+    ${exception}    get from dictionary    ${responsedate}    ${b}
+    ${statusCode}    get from dictionary    ${responsedate}    ${c}
+
+JudgeCondition
+    [Arguments]    ${conditions-1}    ${conditions-2}    ${conditions-3}    ${conditions-4}    ${conditions-5}
+    Run Keyword If    ${conditions-1}    log    收回成功
+    ...    ELSE IF    ${conditions-2}    log    收回失败
+    ...    ELSE IF    ${conditions-3}    log    收回失败
+    ...    ELSE IF    ${conditions-4}    log    收回失败
+    ...    ELSE    ${conditions-5}    log    收回失败

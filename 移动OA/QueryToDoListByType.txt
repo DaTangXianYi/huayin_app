@@ -1,0 +1,124 @@
+*** Settings ***
+Test Timeout      2 minutes    # 2分钟
+Library           RequestsLibrary
+Library           Collections
+Resource          ../业务关键字.txt
+Library           DatabaseLibrary
+Library           OperatingSystem
+
+*** Variables ***
+${accountId}      ff80808164fd7b7e01651217e42d0012    #用户ID
+${dispaOrReceipt}    fwPro    #发文
+${isOver}         0    #待办
+${page}           1    #分页索引
+${pagesize}       10    #分页大小
+
+*** Test Cases ***
+QueryToDoListByType_01
+    Set Environment Variable    NLS_LANG    SIMPLIFIED_CHINESE_CHINA_UTF8
+    Create Session    api    http://192.168.25.16:8099
+    ${addr}    Get Request    api    hyoa/camel/mapi/hyoaMobileService/QueryToDoListByType?isOver=${isOver}&page=${page}&pagesize=${pagesize}&dispaOrReceipt=${dispaOrReceipt}&accountId=${accountId}
+    Should Be Equal As Integers    ${addr.status_code}    200
+    ${responsedata}    to json    ${addr.content}
+    ${keys}    Get Dictionary Keys    ${responsedata}
+    ${items}    Get Dictionary Keys    ${responsedata}
+    ${values}    Get Dictionary Keys    ${responsedata}
+    ${flag}    get from dictionary    ${responsedata}    flag
+    ${exception}    get from dictionary    ${responsedata}    exception
+    ${statusCode}    get from dictionary    ${responsedata}    statusCode
+    ${currpage}    get from dictionary    ${responsedata}    currpage
+    ${totalpages}    get from dictionary    ${responsedata}    totalpages
+    ${totalrecords}    get from dictionary    ${responsedata}    totalrecords
+    ${rows}    get from dictionary    ${responsedata}    rows
+    ${id}    get from dictionary    ${rows[0]}    id
+    ${title}    get from dictionary    ${rows[0]}    title
+    ${sender}    get from dictionary    ${rows[0]}    sender
+    ${vhandlerStatus}    get from dictionary    ${rows[0]}    vhandlerStatus
+    ${processInstanceId}    get from dictionary    ${rows[0]}    processInstanceId
+    ${taskId}    get from dictionary    ${rows[0]}    taskId
+    ${taskname}    get from dictionary    ${rows[0]}    taskname
+    ${booleanDeal}    get from dictionary    ${rows[0]}    booleanDeal
+    ${canReject}    get from dictionary    ${rows[0]}    canReject
+    Connect To Database Using Custom Params    cx_Oracle    'hyoa20180602','hyoa20180602','192.168.25.11:1521/devorcl'
+    ${rs}    Query    select (select t.description from SECURITY_ACCOUNT t WHERE t.description='${accountId}') as accountId,(select t.id from HYOA_DOC_DISPATCH t WHERE t.id='${id}') as id,(select t.TiTle from HYOA_DOC_DISPATCH t WHERE t.id='${id}') as title,(select t.SPONSOR from HYOA_DOC_DISPATCH t WHERE t.id='${id}') as sender,(select t.process_instance_id from BPM_HI_ACTIVITY_EVENT t WHERE t.process_instance_id='${processInstanceId}' and rownum=1) as processInstanceId,(select t.id from BPM_RU_TASK t WHERE t.id='${taskId}') as taskId FROM BPM_HI_ACTIVITY_EVENT d where rownum=1
+    ${accountId-1}    Set Variable    ${rs[0][0]}
+    ${id-1}    Set Variable    ${rs[0][1]}
+    ${title-1}    decode    ${rs[0][2]}    GBK
+    ${sender-1}    decode    ${rs[0][3]}    GBK
+    ${processInstanceId-1}    Set Variable    ${rs[0][4]}
+    ${taskId-1}    Set Variable    ${rs[0][5]}
+    Should Be Equal As Strings    ${accountId-1}    ${accountId}
+    Should Be Equal As Strings    ${id-1}    ${id}
+    Should Be Equal As Strings    ${title-1}    ${title}
+    Should Be Equal As Strings    ${sender-1}    ${sender}
+    Should Be Equal As Strings    ${processInstanceId-1}    ${processInstanceId}
+    Should Be Equal As Strings    ${taskId-1}    ${taskId}
+    Disconnect From Database
+    Run Keyword If    ${addr.status_code}==200 and '${flag}'=='success' and '${exception}'=='' and ${statusCode}==0    log    获取指定公文类别的公文成功
+    ...    ELSE IF    ${addr.status_code}!=200    log    获取指定公文类别的公文失败
+    ...    ELSE IF    '${flag}'=='flase'    log    获取指定公文类别的公文失败
+    ...    ELSE IF    '${exception}'!=''    log    获取指定公文类别的公文失败
+    ...    ELSE    ${statusCode}!=0    log    获取指定公文类别的公文失败
+    Delete All Sessions
+
+QueryToDoListByType_02
+    UTF8环境
+    Session创建    http://192.168.25.16:8099
+    Get请求    hyoa/camel/mapi/hyoaMobileService/QueryToDoListByType?isOver=${isOver}&page=${page}&pagesize=${pagesize}&dispaOrReceipt=${dispaOrReceipt}&accountId=${accountId}    200
+    获取指定公文类别的公文返回的参数    flag    exception    statusCode    currpage    totalpages    totalrecords
+    ...    rows    id    title    sender    vhandlerStatus    processInstanceId
+    ...    taskId    taskname    booleanDeal    canReject
+    Oracle连接    ''hyoa20180602','hyoa20180602','192.168.25.11:1521/devorcl'    select (select t.description from SECURITY_ACCOUNT t WHERE t.description='${accountId}') as accountId,(select t.id from HYOA_DOC_DISPATCH t WHERE t.id='${id}') as id,(select t.TiTle from HYOA_DOC_DISPATCH t WHERE t.id='${id}') as title,(select t.SPONSOR from HYOA_DOC_DISPATCH t WHERE t.id='${id}') as sender,(select t.process_instance_id from BPM_HI_ACTIVITY_EVENT t WHERE t.process_instance_id='${processInstanceId}' and rownum=1) as processInstanceId,(select t.id from BPM_RU_TASK t WHERE t.id='${taskId}') as taskId FROM BPM_HI_ACTIVITY_EVENT d where rownum=1
+    获取指定公文类别的公文查询数据库
+    Disconnect From Database
+    获取指定公文类别的公文判断条件    ${addr.status_code}==200 and '${flag}'=='success' and '${exception}'=='' and ${statusCode}==0    ${addr.status_code}!=200    '${flag}'=='flase'    '${exception}'!=''    ${statusCode}!=0
+    Delete All Sessions
+
+*** Keywords ***
+获取指定公文类别的公文返回的参数
+    [Arguments]    ${a}    ${b}    ${c}    ${d}    ${e}    ${f}
+    ...    ${g}    ${h}    ${i}    ${j}    ${k}    ${l}
+    ...    ${m}    ${n}    ${o}    ${p}
+    ${responsedata}    to json    ${addr.content}
+    ${keys}    Get Dictionary Keys    ${responsedata}
+    ${items}    Get Dictionary Keys    ${responsedata}
+    ${values}    Get Dictionary Keys    ${responsedata}
+    ${flag}    get from dictionary    ${responsedata}    ${a}
+    ${exception}    get from dictionary    ${responsedata}    ${b}
+    ${statusCode}    get from dictionary    ${responsedata}    ${c}
+    ${currpage}    get from dictionary    ${responsedata}    ${d}
+    ${totalpages}    get from dictionary    ${responsedata}    ${e}
+    ${totalrecords}    get from dictionary    ${responsedata}    ${f}
+    ${rows}    get from dictionary    ${responsedata}    ${g}
+    ${id}    get from dictionary    ${rows[0]}    ${h}
+    ${title}    get from dictionary    ${rows[0]}    ${i}
+    ${sender}    get from dictionary    ${rows[0]}    ${j}
+    ${vhandlerStatus}    get from dictionary    ${rows[0]}    ${k}
+    ${processInstanceId}    get from dictionary    ${rows[0]}    ${l}
+    ${taskId}    get from dictionary    ${rows[0]}    ${m}
+    ${taskname}    get from dictionary    ${rows[0]}    ${n}
+    ${booleanDeal}    get from dictionary    ${rows[0]}    ${o}
+    ${canReject}    get from dictionary    ${rows[0]}    ${p}
+    [Return]    ${id}    ${title}    ${sender}    ${processInstanceId}    ${taskId}
+
+获取指定公文类别的公文查询数据库
+    ${accountId-1}    Set Variable    ${rs[0][0]}
+    ${id-1}    Set Variable    ${rs[0][1]}
+    ${title-1}    decode    ${rs[0][2]}    GBK
+    ${sender-1}    decode    ${rs[0][3]}    GBK
+    ${processInstanceId-1}    Set Variable    ${rs[0][4]}
+    ${taskId-1}    Set Variable    ${rs[0][5]}
+    Should Be Equal As Strings    ${accountId-1}    ${accountId}
+    Should Be Equal As Strings    ${id-1}    ${id}
+    Should Be Equal As Strings    ${title-1}    ${title}
+    Should Be Equal As Strings    ${sender-1}    ${sender}
+    Should Be Equal As Strings    ${processInstanceId-1}    ${processInstanceId}
+    Should Be Equal As Strings    ${taskId-1}    ${taskId}
+
+获取指定公文类别的公文判断条件
+    [Arguments]    ${conditions-1}    ${conditions-2}    ${conditions-3}    ${conditions-4}    ${conditions-5}
+    Run Keyword If    ${conditions-1}    log    获取指定公文类别的公文成功
+    ...    ELSE IF    ${conditions-2}    log    获取指定公文类别的公文失败
+    ...    ELSE IF    ${conditions-3}    log    获取指定公文类别的公文失败
+    ...    ELSE IF    ${conditions-4}    log    获取指定公文类别的公文失败
+    ...    ELSE    ${conditions-5}    log    获取指定公文类别的公文失败

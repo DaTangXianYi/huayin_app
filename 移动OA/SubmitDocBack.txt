@@ -1,0 +1,67 @@
+*** Settings ***
+Test Timeout      2 minutes    # 2分钟
+Library           RequestsLibrary
+Library           Collections
+Resource          ../业务关键字.txt
+Library           DatabaseLibrary
+Library           OperatingSystem
+
+*** Variables ***
+${taskId}         4028999064f80a5e0164f98e4d2e0071    # 当前节点ID
+${userId}         ff80808164d0c86d0164ede9870f003f    # 当前用户ID
+${content}        哈哈哈    # 办理意见
+
+*** Test Cases ***
+SubmitDocBack-01
+    Set Environment Variable    NLS_LANG    SIMPLIFIED_CHINESE_CHINA_UTF8
+    Create Session    api    http://192.168.25.16:8099
+    ${addr}    Get Request    api    hyoa/camel/mapi/terminalRestService/SubmitDocBack?taskId=${taskId}&userId=${userId}&content=${content}
+    Should Be Equal As Integers    ${addr.status_code}    200
+    ${responsedata}    to json    ${addr.content}
+    ${keys}    Get Dictionary Keys    ${responsedata}
+    ${items}    Get Dictionary Keys    ${responsedata}
+    ${values}    Get Dictionary Keys    ${responsedata}
+    ${flag}    get from dictionary    ${responsedata}    flag
+    ${exception}    get from dictionary    ${responsedata}    exception
+    Connect To Database Using Custom Params    cx_Oracle    'hyoa20180602','hyoa20180602','192.168.25.11:1521/devorcl'
+    ${rs}    Query    select t.id from (select t.business_key,max(t.id) id from BPM_RU_TASK t group by t.business_key) t WHERE t.id='${taskId}'
+    ${taskId-1}    Set Variable    ${rs[0][0]}
+    Should Be Equal As Strings    ${taskId-1}    ${taskId}
+    Disconnect From Database
+    Run Keyword If    ${addr.status_code}==200 and '${flag}'=='success' and '${exception}'==''    log    公文退回成功
+    ...    ELSE IF    ${addr.status_code}!=200    log    公文退回失败
+    ...    ELSE IF    '${flag}'=='flase'    log    公文退回失败
+    ...    ELSE IF    '${exception}'!=''    log    公文退回失败
+    Delete All Sessions
+
+SubmitDocBack-02
+    UTF8环境
+    Session创建    http://192.168.25.16:8099
+    Get请求    hyoa/camel/mapi/terminalRestService/SubmitDocBack?taskId=${taskId}&userId=${userId}&content=${content}    200
+    公文退回返回的参数    flag    exception
+    Oracle连接    ''hyoa20180602','hyoa20180602','192.168.25.11:1521/devorcl'    select t.id from (select t.business_key,max(t.id) id from BPM_RU_TASK t group by t.business_key) t WHERE t.id='${taskId}'
+    公文退回查询数据库
+    Disconnect From Database
+    公文退回判断条件    ${addr.status_code}==200 and '${flag}'=='success' and '${exception}'==''    ${addr.status_code}!=200    '${flag}'=='flase'    '${exception}'!=''
+    Delete All Sessions
+
+*** Keywords ***
+公文退回返回的参数
+    [Arguments]    ${a}    ${b}
+    ${responsedata}    to json    ${addr.content}
+    ${keys}    Get Dictionary Keys    ${responsedata}
+    ${items}    Get Dictionary Keys    ${responsedata}
+    ${values}    Get Dictionary Keys    ${responsedata}
+    ${flag}    get from dictionary    ${responsedata}    ${a}
+    ${exception}    get from dictionary    ${responsedata}    ${b}
+
+公文退回查询数据库
+    ${taskId-1}    Set Variable    ${rs[0][0]}
+    Should Be Equal As Strings    ${taskId-1}    ${taskId}
+
+公文退回判断条件
+    [Arguments]    ${conditions-1}    ${conditions-2}    ${conditions-3}    ${conditions-4}
+    Run Keyword If    ${conditions-1}    log    公文退回成功
+    ...    ELSE IF    ${conditions-2}    log    公文退回失败
+    ...    ELSE IF    ${conditions-3}    log    公文退回失败
+    ...    ELSE IF    ${conditions-4}    log    公文退回失败

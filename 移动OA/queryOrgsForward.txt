@@ -1,0 +1,64 @@
+*** Settings ***
+Documentation     判断平台账户是否绑定
+Test Timeout      2 seconds    # 2秒
+Library           RequestsLibrary
+Library           Collections
+Resource          ../业务关键字.txt
+Library           DatabaseLibrary
+Library           OperatingSystem
+
+*** Test Cases ***
+queryOrgsForward_01
+    Set Environment Variable    NLS_LANG    SIMPLIFIED_CHINESE_CHINA_UTF8
+    Create Session    api    http://192.168.26.35:8080
+    ${addr}    Get Request    api    hyoa/camel/mapi/hyoaMobileService/queryOrgsForward
+    Should Be Equal As Integers    ${addr.status_code}    200
+    log    ${addr.content}
+    ${responsedata}    to json    ${addr.content}
+    ${keys}    Get Dictionary Keys    ${responsedata}
+    ${dict0}    get from list    ${responsedata}    0
+    ${id}    get from dictionary    ${dict0}    id
+    ${name}    get from dictionary    ${dict0}    name
+    ${parentNameId}    get from dictionary    ${dict0}    parentNameId
+    ${parentName}    get from dictionary    ${dict0}    parentName
+    ${terminalOrganList}    get from dictionary    ${dict0}    terminalOrganList
+    log    ${dict0}
+    Connect To Database Using Custom Params    cx_Oracle    'hyoa_app','hyoa_app','192.168.20.12:1521/jreap_dev'
+    ${result}    Query    select name from security_organization t where t.name='${name}'
+    log    ${result}
+    Disconnect From Database
+    Delete All Sessions
+
+queryOrgsForward_02
+    [Documentation]    分层
+    [Timeout]    1 minute    # 1分钟
+    UTF8Environment
+    SessionCreate    http://192.168.26.35:8080
+    RequestGet    hyoa/camel/mapi/hyoaMobileService/queryOrgs4InnerForward?accountId=${accountId}    200
+    ReturnParameter    id    name    parentNameId    parentName    terminalOrganList
+    OracleConnect    'hyoa_app','hyoa_app','192.168.20.12:1521/jreap_dev'    select name from security_organization t where t.name='${name}'
+    InquireDatabase
+    Disconnect From Database
+    JudgeCondition    ${addr.status_code}==200    ${addr.status_code}!=200
+    Delete All Sessions
+
+*** Keywords ***
+ReturnParameter
+    [Arguments]    ${a}    ${b}    ${c}    ${d}    ${e}
+    ${responsedata}    to json    ${addr.content}
+    ${keys}    Get Dictionary Keys    ${responsedata}
+    ${dict0}    get from list    ${responsedata}    0
+    ${id}    get from dictionary    ${dict0}    a
+    ${name}    get from dictionary    ${dict0}    b
+    ${parentNameId}    get from dictionary    ${dict0}    c
+    ${parentName}    get from dictionary    ${dict0}    d
+    ${terminalOrganList}    get from dictionary    ${dict0}    e
+
+InquireDatabase
+    ${name}    decode    ${rs[0][0]}    GBK
+    Should Be Equal As Strings    ${description}    ${id}
+
+JudgeCondition
+    [Arguments]    ${conditions-1}    ${conditions-2}
+    Run Keyword If    ${conditions-1}    log    查询成功
+    ...    ELSE IF    ${conditions-2}    log    查询失败

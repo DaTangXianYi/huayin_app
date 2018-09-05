@@ -1,0 +1,71 @@
+*** Settings ***
+Test Timeout      2 minutes    # 2分钟
+Library           RequestsLibrary
+Library           Collections
+Library           DatabaseLibrary
+Resource          ../业务关键字.txt
+Library           OperatingSystem
+
+*** Variables ***
+${talkId}         00fedf76-a63f-4591-9f60-ed10e538aff7    # 任务ID
+${taskHandle}     1    # 办理意见
+${resultClass}    1    #评价：0，其他；1、优秀；2、良好；3、合格；4、差
+
+*** Test Cases ***
+SubmitPoint_01
+    Set Environment Variable    NLS_LANG    SIMPLIFIED_CHINESE_CHINA_UTF8
+    Create Session    api    http://192.168.25.16:8099
+    ${addr}    Get Request    api    hyoa/camel/mapi/hyoaMobileService/SubmitPoint?talkId=${talkId}&taskHandle=${taskHandle}&resultClass=${resultClass}
+    Should Be Equal As Integers    ${addr.status_code}    200
+    ${responsedata}    to json    ${addr.content}
+    ${keys}    Get Dictionary Keys    ${responsedata}
+    ${items}    Get Dictionary Keys    ${responsedata}
+    ${values}    Get Dictionary Keys    ${responsedata}
+    ${flag}    get from dictionary    ${responsedata}    flag
+    ${exception}    get from dictionary    ${responsedata}    exception
+    ${statusCode}    get from dictionary    ${responsedata}    statusCode
+    Connect To Database Using Custom Params    cx_Oracle    'hyoa20180602','hyoa20180602','192.168.25.11:1521/devorcl'
+    ${rs}    Query    select a.id from hyoa_task_info a WHERE a.id='${talkId}'
+    ${talkId-1}    Set Variable    ${rs[0][0]}
+    Should Be Equal As Strings    ${talkId-1}    ${talkId}
+    Disconnect From Database
+    Run Keyword If    ${addr.status_code}==200 and '${flag}'=='success' and '${exception}'=='' and ${statusCode}==0    log    重点任务审核成功
+    ...    ELSE IF    ${addr.status_code}!=200    log    重点任务审核失败
+    ...    ELSE IF    '${flag}'=='flase'    log    重点任务审核失败
+    ...    ELSE IF    '${exception}'!=''    log    重点任务审核失败
+    ...    ELSE    ${statusCode}!=0    log    重点任务审核失败
+    Delete All Sessions
+
+SubmitPoint_02
+    UTF8环境
+    Session创建    http://192.168.25.16:8099
+    Get请求    hyoa/camel/mapi/hyoaMobileService/SubmitPoint?talkId=${talkId}&taskHandle=${taskHandle}&resultClass=${resultClass}    200
+    重点任务审核返回的参数    flag    exception    statusCode
+    Oracle连接    'hyoa20180602','hyoa20180602','192.168.25.11:1521/devorcl'    select a.id from hyoa_task_info a WHERE a.id='${talkId}'
+    重点任务审核查询数据库
+    Disconnect From Database
+    重点任务审核判断条件    ${addr.status_code}==200 and '${flag}'=='success' and '${exception}'=='' and ${statusCode}==0    ${addr.status_code}!=200    '${flag}'=='flase'    '${exception}'!=''    ${statusCode}!=0
+    Delete All Sessions
+
+*** Keywords ***
+重点任务审核返回的参数
+    [Arguments]    ${a}    ${b}    ${c}
+    ${responsedata}    to json    ${addr.content}
+    ${keys}    Get Dictionary Keys    ${responsedata}
+    ${items}    Get Dictionary Keys    ${responsedata}
+    ${values}    Get Dictionary Keys    ${responsedata}
+    ${flag}    get from dictionary    ${responsedata}    ${a}
+    ${exception}    get from dictionary    ${responsedata}    ${b}
+    ${statusCode}    get from dictionary    ${responsedata}    ${c}
+
+重点任务审核查询数据库
+    ${talkId-1}    Set Variable    ${rs[0][0]}
+    Should Be Equal As Strings    ${talkId-1}    ${talkId}
+
+重点任务审核判断条件
+    [Arguments]    ${conditions-1}    ${conditions-2}    ${conditions-3}    ${conditions-4}    ${conditions-5}
+    Run Keyword If    ${conditions-1}    log    重点任务审核成功
+    ...    ELSE IF    ${conditions-2}    log    重点任务审核失败
+    ...    ELSE IF    ${conditions-3}    log    重点任务审核失败
+    ...    ELSE IF    ${conditions-4}    log    重点任务审核失败
+    ...    ELSE    ${conditions-5}    log    重点任务审核失败

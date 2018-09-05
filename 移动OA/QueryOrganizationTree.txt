@@ -1,0 +1,56 @@
+*** Variables ***
+${userId}         ff8080816218fa3801626f5e554c00e0
+${type}           1
+
+*** Test Cases ***
+QueryOrganizationTree_01
+    Set Environment Variable    NLS_LANG    SIMPLIFIED_CHINESE_CHINA_UTF8
+    Create Session    api    http://192.168.26.35:8080
+    ${addr}    get request    api    hyoa/camel/mapi/terminalRestService/QueryOrganizationTree?userid=${userId}&type=${type}
+    Should Be Equal As Strings    ${addr.status_code}    200    #判断请求响应是否为200，服务器成功返回网页
+    log    ${addr.content}    #打印接口返回值
+    ${responsedate}    to json    ${addr.content}    #使用to json将string转换为json串
+    ${keys}    Get Dictionary Keys    ${responsedate}
+    ${dict0}    get from list    ${responsedate}    0
+    ${parentName}    get from dictionary    ${dict0}    parentName
+    ${accountList}    get from dictionary    ${dict0}    accountList
+    ${id}    get from dictionary    ${dict0}    id
+    ${parentNameId}    get from dictionary    ${dict0}    parentNameId
+    ${name}    get from dictionary    ${dict0}    name
+    Connect To Database Using Custom Params    cx_Oracle    'hyoa20180602','hyoa20180602','192.168.25.11:1521/devorcl'
+    ${parentid}    Query    select parent_id from security_account a,security_employee b,security_organization c where a.employee_id=b.id and b.dept_id=c.id and a.description='${userId}'
+    ${result}    Query    select name from security_organization \ where parent_id='${parentid[0][0]}'
+    log    ${result}
+    ${resultDecode}    DatabaseLibrary.Decode    ${result[0][0]}    GBK
+    Should Be Equal As Strings    ${name}    ${resultDecode}
+    Disconnect From Database
+    Delete All Sessions
+
+QueryOrganizationTree_02
+    [Documentation]    分层
+    [Timeout]    1 minute    # 1分钟
+    UTF8Environment
+    SessionCreate    http://192.168.26.35:8080
+    RequestGet    hyoa/camel/mapi/terminalRestService/QueryOrganizationTree?userid=${userId}&type=${type}    200
+    ReturnParameter    parentName    accountList    id    parentNameId    id    name
+    OracleConnect    'hyoa_app','hyoa_app','192.168.20.12:1521/jreap_dev'    select parent_id from security_account a,security_employee b,security_organization c where a.employee_id=b.id and b.dept_id=c.id and a.description='${userId}'
+    Disconnect From Database
+    JudgeCondition    ${addr.status_code}==200    ${addr.status_code}!=200
+    Delete All Sessions
+
+*** Keywords ***
+ReturnParameter
+    [Arguments]    ${a}    ${b}    ${c}    ${d}    ${e}
+    ${responsedate}    to json    ${addr.content}    #使用to json将string转换为json串
+    ${keys}    Get Dictionary Keys    ${responsedate}
+    ${dict0}    get from list    ${responsedate}    0
+    ${parentName}    get from dictionary    ${dict0}    a
+    ${accountList}    get from dictionary    ${dict0}    b
+    ${id}    get from dictionary    ${dict0}    c
+    ${parentNameId}    get from dictionary    ${dict0}    d
+    ${name}    get from dictionary    ${dict0}    e
+
+JudgeCondition
+    [Arguments]    ${conditions-1}    ${conditions-2}
+    Run Keyword If    ${conditions-1}    log    查询成功
+    ...    ELSE IF    ${conditions-2}    log    查询失败

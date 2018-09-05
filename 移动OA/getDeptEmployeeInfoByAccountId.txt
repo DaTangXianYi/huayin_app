@@ -1,0 +1,82 @@
+*** Settings ***
+Documentation     部门负责人获取部门办事员列表
+Test Timeout      2 minutes    # 2分钟
+Library           RequestsLibrary
+Library           Collections
+Library           DatabaseLibrary
+Library           OperatingSystem
+Resource          ../业务关键字.txt
+
+*** Variables ***
+${accountId}      ff80808164d0c86d0164ede9870f003c
+
+*** Test Cases ***
+getDeptEmployeeInfoByAccountId_01
+    [Documentation]    部门负责人获取部门办事员列表成功
+    [Timeout]    1 minute    # 1分钟
+    Set Environment Variable    NLS_LANG    SIMPLIFIED_CHINESE_CHINA_UTF8
+    Create Session    api    http://192.168.26.35:8080
+    ${addr}    get request    api    hyoa/camel/mapi/hyoaMobileService/getDeptEmployeeInfoByAccountId?accountId=${accountId}
+    Should Be Equal As Strings    ${addr.status_code}    200
+    ${responsedate}    to json    ${addr.content}
+    ${keys}    Get Dictionary Keys    ${responsedate}
+    ${items}    Get Dictionary items    ${responsedate}
+    ${values}    Get Dictionary values    ${responsedate}
+    ${flag}    get from dictionary    ${responsedate}    flag
+    ${exception}    get from dictionary    ${responsedate}    exception
+    ${statusCode}    get from dictionary    ${responsedate}    statusCode
+    ${result}    get from dictionary    ${responsedate}    result
+    ${result0}    get from list    ${result}    0
+    ${id}    get from dictionary    ${result0}    id
+    ${name}    get from dictionary    ${result0}    name
+    ${dept}    get from dictionary    ${result0}    dept
+    ${orderno}    get from dictionary    ${result0}    orderno
+    ${accountId}    get from dictionary    ${result0}    accountId
+    ${eMail}    get from dictionary    ${result0}    eMail
+    ${loginName}    get from dictionary    ${result0}    loginName
+    Run Keyword If    ${addr.status_code}==200 and '${flag}'=='success' and '${exception}'=='' and ${statusCode}==0    log    查询成功
+    ...    ELSE IF    ${addr.status_code}!=200    log    查询失败
+    ...    ELSE IF    '${flag}'=='flase'    log    查询失败
+    ...    ELSE IF    '${exception}'!=''    log    查询失败
+    ...    ELSE    ${statusCode}!=0    log    查询失败
+    Delete All Sessions
+
+getDeptEmployeeInfoByAccountId_02
+    [Documentation]    部门负责人获取部门办事员列表成功：分层
+    [Timeout]    1 minute    # 1分钟
+    UTF8Environment
+    SessionCreate    http://192.168.26.35:8080
+    RequestGet    hyoa/camel/mapi/hyoaMobileService/getDeptEmployeeInfoByAccountId?accountId=${accountId}    200
+    ReturnParameter    flag    exception    statusCode    result    id    name
+    ...    dept    orderno    accountId    eMail    loginName
+    JudgeCondition    ${addr.status_code}==200 and '${flag}'=='success' and '${exception}'=='' and ${statusCode}==0    ${addr.status_code}!=200    '${flag}'=='flase'    '${exception}'!=''    ${statusCode}!=0
+    Delete All Sessions
+
+*** Keywords ***
+ReturnParameter
+    [Arguments]    ${a}    ${b}    ${c}    ${d}    ${e}    ${f}
+    ...    ${g}    ${h}    ${i}    ${j}    ${k}
+    ${responsedate}    to json    ${addr.content}
+    ${keys}    Get Dictionary Keys    ${responsedate}
+    ${items}    Get Dictionary items    ${responsedate}
+    ${values}    Get Dictionary values    ${responsedate}
+    ${flag}    get from dictionary    ${responsedate}    ${a}
+    ${exception}    get from dictionary    ${responsedate}    ${b}
+    ${statusCode}    get from dictionary    ${responsedate}    ${c}
+    ${result}    get from dictionary    ${responsedate}    ${d}
+    ${result0}    get from list    ${result}    0
+    ${id}    get from dictionary    ${result0}    ${e}
+    ${name}    get from dictionary    ${result0}    ${f}
+    ${dept}    get from dictionary    ${result0}    ${g}
+    ${orderno}    get from dictionary    ${result0}    ${h}
+    ${accountId}    get from dictionary    ${result0}    ${i}
+    ${eMail}    get from dictionary    ${result0}    ${j}
+    ${loginName}    get from dictionary    ${result0}    ${k}
+
+JudgeCondition
+    [Arguments]    ${conditions-1}    ${conditions-2}    ${conditions-3}    ${conditions-4}    ${conditions-5}
+    Run Keyword If    ${conditions-1}    log    查询成功
+    ...    ELSE IF    ${conditions-2}    log    查询失败
+    ...    ELSE IF    ${conditions-3}    log    查询失败
+    ...    ELSE IF    ${conditions-4}    log    查询失败
+    ...    ELSE    ${conditions-5}    log    查询失败
