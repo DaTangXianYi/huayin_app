@@ -1,0 +1,28 @@
+*** Settings ***
+Library           Collections
+Library           RequestsLibrary
+Library           DatabaseLibrary
+Library           HttpLibrary.HTTP
+Library           OperatingSystem
+
+*** Variables ***
+
+*** Keywords ***
+SessionCreate
+    [Arguments]    ${host}
+    create session    api    ${host}
+
+RequestGet
+    [Arguments]    ${url}    ${status_code}
+    ${addr}    Get Request    api    ${url}
+    Should Be Equal As Integers    ${addr.status_code}    ${status_code}
+    [Return]    ${addr.content}    # Get请求返回的对象${addr}
+
+OracleConnect
+    [Arguments]    ${login_sign}    ${sql}
+    Connect To Database Using Custom Params    cx_Oracle    ${login_sign}
+    ${rs}    Query    ${sql}
+    [Return]    ${rs}    # 查询数据库返回参数组成的变量集
+
+UTF8Environment
+    Set Environment Variable    NLS_LANG    SIMPLIFIED_CHINESE_CHINA_UTF8
