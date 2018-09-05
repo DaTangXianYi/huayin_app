@@ -1,0 +1,34 @@
+*** Settings ***
+Test Timeout      2 minutes    # 2分钟
+Library           RequestsLibrary
+Library           Collections
+Library           DatabaseLibrary
+Resource          ../业务关键字.txt
+Library           OperatingSystem
+
+*** Test Cases ***
+GetEPInfo
+    Set Environment Variable    NLS_LANG    SIMPLIFIED_CHINESE_CHINA_UTF8
+    Create Session    api    http://10.232.234.210:8800
+    ${userId}    Set Variable    ff8080816218fa3801626f5e554c00e0    #设置参数userId
+    ${energyType}    Set Variable    0    #设置参数energyType
+    ${addr}    get request    api    HyAppService.svc/GetEPInfo?userId=${userId}
+    Should Be Equal As Strings    ${addr.status_code}    200    #判断请求响应是否为200，服务器成功返回网页
+    ${responsedate}    to json    ${addr.content}    #使用to json将string转换为json串
+    ${keys}    Get Dictionary Keys    ${responsedate}
+    ${dict0}    get from list    ${responsedate}    0
+    ${factoryGuid}    get from dictionary    ${dict0}    factoryGuid
+    ${factoryName}    get from dictionary    ${dict0}    factoryName
+    ${fh}    get from dictionary    ${dict0}    fh
+    ${fhl}    get from dictionary    ${dict0}    fh
+    ${list}    get from dictionary    ${dict0}    list
+    ${machineData}    get from list    ${list}    0
+    ${point}    get from dictionary    ${machineData}    point
+    ${text}    get from dictionary    ${machineData}    text
+    ${type}    get from dictionary    ${machineData}    type
+    ${machineDatalist}    get from dictionary    ${machineData}    machineData
+    ${machineDatalist0}    get from list    ${machineDatalist}    0
+    ${value}    get from dictionary    ${machineDatalist0}    value
+    ${pointId}    get from dictionary    ${machineDatalist0}    pointId
+    ${deptGuid}    get from dictionary    ${machineDatalist0}    deptGuid
+    Delete All Sessions

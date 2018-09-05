@@ -1,0 +1,27 @@
+*** Settings ***
+Test Timeout      2 minutes    # 2分钟
+Library           RequestsLibrary
+Library           Collections
+Library           OperatingSystem
+
+*** Test Cases ***
+根据用户名获取其所在机构下指定能源类型的电厂集合
+    Set Environment Variable    NLS_LANG    SIMPLIFIED_CHINESE_CHINA_UTF8
+    Create Session    api    http://10.232.234.210:8800
+    ${userId}    Set Variable    ff8080816218fa3801626f5e554c00e0    #用户GUID
+    ${energyType}    Set Variable    0    #0火电;1水电
+    ${addr}    get request    api    HyAppService.svc/GetFactoryList?userId=${userId}&energyType=${energyType}
+    Should Be Equal As Integers    ${addr.status_code}    200
+    log    ${addr.content}
+    ${responsedata}    to json    ${addr.content}
+    ${Code-0}    get from dictionary    ${responsedata[0]}    Code
+    ${Text-0}    get from dictionary    ${responsedata[0]}    Text
+    ${Value-0}    get from dictionary    ${responsedata[0]}    Value
+    ${energyType-0}    get from dictionary    ${responsedata[0]}    energyType
+    ${Code-1}    get from dictionary    ${responsedata[1]}    Code
+    ${Text-1}    get from dictionary    ${responsedata[1]}    Text
+    ${Value-1}    get from dictionary    ${responsedata[1]}    Value
+    ${energyType-1}    get from dictionary    ${responsedata[1]}    energyType
+    Run Keyword if    ${addr.status_code}==200    log    主要参数查询成功
+    ...    ELSE IF    ${addr.status_code} != 200    log    主要参数查询失败
+    Delete All Sessions

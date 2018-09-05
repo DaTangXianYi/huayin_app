@@ -1,0 +1,34 @@
+*** Settings ***
+Test Timeout      2 minutes    # 2分钟
+Library           RequestsLibrary
+Library           Collections
+Library           OperatingSystem
+
+*** Test Cases ***
+风机主要参数
+    Set Environment Variable    NLS_LANG    SIMPLIFIED_CHINESE_CHINA_UTF8
+    Create Session    api    http://10.232.234.210:8800
+    ${deptGuid}    Set Variable    aa6173f6-e31b-wang-6dff66b7e24e1    #风场ID
+    ${addr}    get request    api    HyAppService.svc/GetWindParameter?deptGuid=${deptGuid}
+    Should Be Equal As Integers    ${addr.status_code}    200
+    ${responsedata}    to json    ${addr.content}
+    ${keys}    Get Dictionary Keys    ${responsedata}
+    ${items}    Get Dictionary items    ${responsedata}
+    ${values}    Get Dictionary values    ${responsedata}
+    ${deptGuid}    get from dictionary    ${responsedata}    deptGuid
+    ${deptName}    get from dictionary    ${responsedata}    deptName
+    ${fh}    get from dictionary    ${responsedata}    fh
+    ${runCapacity}    get from dictionary    ${responsedata}    runCapacity
+    ${MachineInfo}    get from dictionary    ${responsedata}    MachineInfo
+    ${Capacity}    get from dictionary    ${MachineInfo[0]}    Capacity
+    ${deptGuid}    get from dictionary    ${MachineInfo[0]}    deptGuid
+    ${deptName}    get from dictionary    ${MachineInfo[0]}    deptName
+    ${dl_a}    get from dictionary    ${MachineInfo[0]}    dl_a
+    ${dl_b}    get from dictionary    ${MachineInfo[0]}    dl_b
+    ${dl_c}    get from dictionary    ${MachineInfo[0]}    dl_c
+    ${fh}    get from dictionary    ${MachineInfo[0]}    fh
+    ${hjwd}    get from dictionary    ${MachineInfo[0]}    hjwd
+    ${speed}    get from dictionary    ${MachineInfo[0]}    speed
+    Run Keyword if    ${addr.status_code}==200    log    风机主要参数查询成功
+    ...    ELSE IF    ${addr.status_code} != 200    log    风机主要参数查询失败
+    Delete All Sessions

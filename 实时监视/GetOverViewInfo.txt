@@ -1,0 +1,47 @@
+*** Settings ***
+Documentation     总览
+Test Timeout      2 minutes    # 2分钟
+Library           RequestsLibrary
+Library           Collections
+Library           DatabaseLibrary
+Library           OperatingSystem
+Resource          ../业务关键字.txt
+
+*** Test Cases ***
+GetOverViewInfo_01
+    [Documentation]    总览
+    Set Environment Variable    NLS_LANG    SIMPLIFIED_CHINESE_CHINA_UTF8
+    Create Session    api    http://10.232.234.210:8800
+    ${addr}    get request    api    ssxt/HyAppService.svc/GetOverViewInfo
+    Should Be Equal As Strings    ${addr.status_code}    200    #判断请求响应是否为200，服务器成功返回网页
+    ${responsedate}    to json    ${addr.content}    #使用to json将string转换为json串
+    ${keys}    Get Dictionary Keys    ${responsedate}
+    ${items}    Get Dictionary items    ${responsedate}
+    ${values}    Get Dictionary values    ${responsedate}
+    ${day_fdl}    get from dictionary    ${responsedate}    day_fdl
+    ${fh}    get from dictionary    ${responsedate}    fh
+    ${fhl}    get from dictionary    ${responsedate}    fhl
+    ${month_fdl}    get from dictionary    ${responsedate}    month_fdl
+    ${year_fdl}    get from dictionary    ${responsedate}    year_fdl
+    Delete All Sessions
+
+GetOverViewInfo_02
+    [Documentation]    总览
+    UTF8Environment
+    SessionCreate    http://10.232.234.210:8800
+    RequestGet    ssxt/HyAppService.svc/GetOverViewInfo    200
+    ReturnParameter    day_fdl    fh    fhl    month_fdl    year_fdl
+    Delete All Sessions
+
+*** Keywords ***
+ReturnParameter
+    [Arguments]    ${a}    ${b}    ${c}    ${d}    ${e}
+    ${responsedate}    to json    ${addr.content}
+    ${keys}    Get Dictionary Keys    ${responsedate}
+    ${items}    Get Dictionary items    ${responsedate}
+    ${values}    Get Dictionary values    ${responsedate}
+    ${day_fdl}    get from dictionary    ${responsedate}    ${a}
+    ${fh}    get from dictionary    ${responsedate}    ${b}
+    ${fhl}    get from dictionary    ${responsedate}    ${c}
+    ${month_fdl}    get from dictionary    ${responsedate}    ${d}
+    ${year_fdl}    get from dictionary    ${responsedate}    ${e}

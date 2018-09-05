@@ -1,0 +1,24 @@
+*** Settings ***
+Test Timeout      2 minutes    # 2分钟
+Library           RequestsLibrary
+Library           Collections
+Library           DatabaseLibrary
+Resource          ../业务关键字.txt
+Library           OperatingSystem
+
+*** Test Cases ***
+GetZdInfo
+    Set Environment Variable    NLS_LANG    SIMPLIFIED_CHINESE_CHINA_UTF8
+    Create Session    api    http://10.232.234.210:8800
+    ${deptGuid}    Set Variable    716ae514-95f8-4f14-8ef8-46fd6985a7b0    #设置参数deptGuid
+    ${addr}    get request    api    HyAppService.svc/GetZdInfo?deptGuid=${deptGuid}
+    Should Be Equal As Strings    ${addr.status_code}    200    #判断请求响应是否为200，服务器成功返回网页
+    ${responsedate}    to json    ${addr.content}    #使用to json将string转换为json串
+    ${keys}    Get Dictionary Keys    ${responsedate}
+    ${dict0}    get from list    ${responsedate}    0
+    ${WzValue}    get from dictionary    ${dict0}    WzValue
+    ${WwValue}    get from dictionary    ${dict0}    WwValue
+    ${XValue}    get from dictionary    ${dict0}    XValue
+    ${YValue}    get from dictionary    ${dict0}    YValue
+    ${No}    get from dictionary    ${dict0}    No
+    Delete All Sessions

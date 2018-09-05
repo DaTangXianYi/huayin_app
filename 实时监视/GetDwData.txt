@@ -1,0 +1,26 @@
+*** Settings ***
+Test Timeout      2 minutes    # 2分钟
+Library           RequestsLibrary
+Library           Collections
+Library           DatabaseLibrary
+Resource          ../业务关键字.txt
+Library           OperatingSystem
+
+*** Test Cases ***
+GetDwData
+    Set Environment Variable    NLS_LANG    SIMPLIFIED_CHINESE_CHINA_UTF8
+    Create Session    api    http://10.232.234.210:8800
+    ${date}    Set Variable    2018-07-19    #设置参数date
+    ${addr}    get request    api    HyAppService.svc/GetDwData?date=${date}
+    Should Be Equal As Strings    ${addr.status_code}    200    #判断请求响应是否为200，服务器成功返回网页
+    ${responsedate}    to json    ${addr.content}    #使用to json将string转换为json串
+    ${keys}    Get Dictionary Keys    ${responsedate}
+    ${dict0}    get from list    ${responsedate}    0
+    ${d_v}    get from dictionary    ${dict0}    d_v
+    ${m_v}    get from dictionary    ${dict0}    m_v
+    ${name}    get from dictionary    ${dict0}    name
+    ${dict1}    get from list    ${responsedate}    1
+    ${d_v1}    get from dictionary    ${dict1}    d_v
+    ${m_v1}    get from dictionary    ${dict1}    m_v
+    ${name1}    get from dictionary    ${dict1}    name
+    Delete All Sessions

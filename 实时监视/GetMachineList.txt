@@ -1,0 +1,24 @@
+*** Settings ***
+Test Timeout      2 minutes    # 2分钟
+Library           RequestsLibrary
+Library           Collections
+Library           DatabaseLibrary
+Resource          ../业务关键字.txt
+Library           OperatingSystem
+
+*** Test Cases ***
+GetMachineList
+    Set Environment Variable    NLS_LANG    SIMPLIFIED_CHINESE_CHINA_UTF8
+    Create Session    api    http://10.232.234.210:8800
+    ${deptGuid}    Set Variable    1a15920c-8a43-40cd-93a8-a0a481e5aeca    #设置参数deptGuid
+    ${addr}    get request    api    HyAppService.svc/GetMachineList?deptGuid=${deptGuid}
+    Should Be Equal As Strings    ${addr.status_code}    200    #判断请求响应是否为200，服务器成功返回网页
+    ${responsedate}    to json    ${addr.content}    #使用to json将string转换为json串
+    ${keys}    Get Dictionary Keys    ${responsedate}
+    ${dict0}    get from list    ${responsedate}    0
+    ${keys1}    Get Dictionary Keys    ${dict0}
+    ${Code}    get from dictionary    ${dict0}    Code
+    ${Text}    get from dictionary    ${dict0}    Text
+    ${Value}    get from dictionary    ${dict0}    Value
+    ${energyType}    get from dictionary    ${dict0}    energyType
+    Delete All Sessions

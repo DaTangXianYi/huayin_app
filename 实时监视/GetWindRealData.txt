@@ -1,0 +1,33 @@
+*** Settings ***
+Test Timeout      2 minutes    # 2分钟
+Library           RequestsLibrary
+Library           Collections
+Library           OperatingSystem
+
+*** Test Cases ***
+风电机组状态
+    Set Environment Variable    NLS_LANG    SIMPLIFIED_CHINESE_CHINA_UTF8
+    Create Session    api    http://10.232.234.210:8800
+    ${deptGuid}    Set Variable    74298bd3-32f7-41ad-bd98-1202a1cdb39f    #风场ID
+    ${addr}    get request    api    HyAppService.svc/GetWindRealData?deptGuid=${deptGuid}
+    Should Be Equal As Integers    ${addr.status_code}    200
+    ${responsedata}    to json    ${addr.content}
+    ${keys}    Get Dictionary Keys    ${responsedata}
+    ${items}    Get Dictionary items    ${responsedata}
+    ${values}    Get Dictionary values    ${responsedata}
+    ${name}    get from dictionary    ${responsedata}    name
+    ${tyts}    get from dictionary    ${responsedata}    tyts
+    ${yxts}    get from dictionary    ${responsedata}    yxts
+    ${machineList}    get from dictionary    ${responsedata}    machineList
+    ${deptGuid-0}    get from dictionary    ${machineList[0]}    deptGuid
+    ${fh-0}    get from dictionary    ${machineList[0]}    fh
+    ${name-0}    get from dictionary    ${machineList[0]}    name
+    ${speed-0}    get from dictionary    ${machineList[0]}    speed
+    ${state-0}    get from dictionary    ${machineList[0]}    state
+    ${deptGuid-1}    get from dictionary    ${machineList[1]}    deptGuid
+    ${fh-1}    get from dictionary    ${machineList[1]}    fh
+    ${name-1}    get from dictionary    ${machineList[1]}    name
+    ${speed-1}    get from dictionary    ${machineList[1]}    speed
+    Run Keyword if    ${addr.status_code}==200    log    风电机组状态查询成功
+    ...    ELSE IF    ${addr.status_code} != 200    log    风电机组状态查询失败
+    Delete All Sessions

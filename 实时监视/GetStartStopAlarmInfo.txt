@@ -1,0 +1,24 @@
+*** Settings ***
+Test Timeout      2 minutes    # 2分钟
+Library           RequestsLibrary
+Library           Collections
+Library           OperatingSystem
+
+*** Test Cases ***
+开停机告警
+    Set Environment Variable    NLS_LANG    SIMPLIFIED_CHINESE_CHINA_UTF8
+    Create Session    api    http://10.232.234.210:8800
+    ${userId}    Set Variable    ff8080816218fa3801626f5e554c00e0    #用户GUID
+    ${addr}    get request    api    HyAppService.svc/GetStartStopAlarmInfo?userId=${userId}
+    Should Be Equal As Integers    ${addr.status_code}    200
+    ${responsedata}    to json    ${addr.content}
+    ${capacity}    get from dictionary    ${responsedata[0]}    capacity
+    ${duration}    get from dictionary    ${responsedata[0]}    duration
+    ${endTime}    get from dictionary    ${responsedata[0]}    endTime
+    ${factoryName}    get from dictionary    ${responsedata[0]}    factoryName
+    ${machineName}    get from dictionary    ${responsedata[0]}    machineName
+    ${remark}    get from dictionary    ${responsedata[0]}    remark
+    ${startTime}    get from dictionary    ${responsedata[0]}    startTime
+    Run Keyword if    ${addr.status_code}==200    log    开停机告警
+    ...    ELSE IF    ${addr.status_code} != 200    log    查询失败
+    Delete All Sessions

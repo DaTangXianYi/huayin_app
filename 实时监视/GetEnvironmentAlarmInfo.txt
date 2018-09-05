@@ -1,0 +1,69 @@
+*** Settings ***
+Test Timeout      2 minutes    # 2分钟
+Library           RequestsLibrary
+Library           Collections
+Resource          ../业务关键字.txt
+Library           DatabaseLibrary
+Library           OperatingSystem
+
+*** Variables ***
+${userId}         ff8080816218fa3801626f5e554c00e0    #用户GUID
+
+*** Test Cases ***
+GetEnvironmentAlarmInfo_01
+    Set Environment Variable    NLS_LANG    SIMPLIFIED_CHINESE_CHINA_UTF8
+    Create Session    api    http://10.232.234.210:8800
+    ${addr}    get request    api    HyAppService.svc/GetEnvironmentAlarmInfo?userId=${userId}
+    Should Be Equal As Integers    ${addr.status_code}    200
+    ${responsedata}    to json    ${addr.content}
+    ${DeptGuid}    get from dictionary    ${responsedata[0]}    DeptGuid
+    ${MachineName}    get from dictionary    ${responsedata[0]}    MachineName
+    ${PlantName}    get from dictionary    ${responsedata[0]}    PlantName
+    ${AlarmName}    get from dictionary    ${responsedata[0]}    AlarmName
+    ${AlarmValue}    get from dictionary    ${responsedata[0]}    AlarmValue
+    ${StartTime}    get from dictionary    ${responsedata[0]}    StartTime
+    ${EndTime}    get from dictionary    ${responsedata[0]}    EndTime
+    ${Duration}    get from dictionary    ${responsedata[0]}    Duration
+    Connect To Database Using Custom Params    cx_Oracle    'dtRIS_APP_DEV_New','dtRIS_APP_DEV_New','10.232.234.212:1521/SSXT'
+    ${rs}    Query    select t.appuserid from dtris_reap_dev_new.employee t where t.appuserid='${userId}'
+    ${userId-1}    Set Variable    ${rs[0][0]}
+    Should Be Equal As Strings    ${userId-1}    ${userId}
+    Disconnect From Database
+    Run Keyword if    ${addr.status_code}==200    log    超标排放告警
+    ...    ELSE IF    ${addr.status_code} != 200    log    查询失败
+    Delete All Sessions
+
+GetEnvironmentAlarmInfo_02
+    UTF8环境
+    Session创建    http://10.232.234.210:8800
+    Get请求    HyAppService.svc/GetEnvironmentAlarmInfo?userId=${userId}    200
+    超标排放告警返回的参数    Code    Text    Value    energyType    Code    Text
+    ...    Value    energyType
+    Oracle连接    'dtRIS_APP_DEV_New','dtRIS_APP_DEV_New','10.232.234.212:1521/SSXT'    select t.appuserid from dtris_reap_dev_new.employee t where t.appuserid='${userId}'
+    超标排放告警查询数据库
+    Disconnect From Database
+    超标排放告警判断条件    ${status}==1 and ${addr.status_code}==200    ${status}!=1 and ${addr.status_code}!=200
+    Delete All Sessions
+
+*** Keywords ***
+超标排放告警返回的参数
+    [Arguments]    ${a}    ${b}    ${c}    ${d}    ${e}    ${f}
+    ...    ${g}    ${h}
+    ${responsedata}    to json    ${addr.content}
+    ${Code-0}    get from dictionary    ${responsedata[0]}    ${a}
+    ${Text-0}    get from dictionary    ${responsedata[0]}    ${b}
+    ${Value-0}    get from dictionary    ${responsedata[0]}    ${c}
+    ${energyType-0}    get from dictionary    ${responsedata[0]}    ${d}
+    ${Code-1}    get from dictionary    ${responsedata[1]}    ${e}
+    ${Text-1}    get from dictionary    ${responsedata[1]}    ${f}
+    ${Value-1}    get from dictionary    ${responsedata[1]}    ${g}
+    ${energyType-1}    get from dictionary    ${responsedata[1]}    ${h}
+
+超标排放告警查询数据库
+    ${userId-1}    Set Variable    ${rs[0][0]}
+    Should Be Equal As Strings    ${userId-1}    ${userId}
+
+超标排放告警判断条件
+    [Arguments]    ${conditions-1}    ${conditions-2}
+    Run Keyword if    ${conditions-1}    log    超标排放告警
+    ...    ELSE IF    ${conditions-2}    log    查询失败
