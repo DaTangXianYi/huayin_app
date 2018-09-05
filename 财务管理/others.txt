@@ -1,0 +1,48 @@
+*** Settings ***
+Documentation     其他财务指标
+Test Timeout      2 minutes    # 2分钟
+Library           RequestsLibrary
+Library           Collections
+Library           DatabaseLibrary
+Library           OperatingSystem
+Resource          ../业务关键字.txt
+
+*** Variables ***
+${month}          2018-01    # 月份
+${company}        DTHN-01-01-03    # 公司编号
+
+*** Test Cases ***
+others_01
+    [Documentation]    其他财务指标
+    Set Environment Variable    NLS_LANG    SIMPLIFIED_CHINESE_CHINA_UTF8
+    Create Session    api    http://192.168.26.35:8080
+    ${addr}    Get Request    api    finance/api/others?month=${month}&company=${company}
+    Should Be Equal As Integers    ${addr.status_code}    200
+    ${responsedata}    to json    ${addr.content}
+    ${TYPE}    get from dictionary    ${responsedata[0]}    TYPE
+    ${MONTH_VALUE}    get from dictionary    ${responsedata[0]}    MONTH_VALUE
+    ${YEAR_VALUE}    get from dictionary    ${responsedata[0]}    YEAR_VALUE
+    Run Keyword If    ${addr.status_code}==200    log    其他财务指标查询成功
+    ...    ELSE IF    ${addr.status_code}!=200    log    其他财务指标查询失败
+    Delete All Sessions
+
+others_02
+    [Documentation]    其他财务指标
+    UTF8Environment
+    SessionCreate    http://192.168.26.35:8080
+    RequestGet    finance/api/others?month=${month}&company=${company}    200
+    ReturnParameter    TYPE    MONTH_VALUE    YEAR_VALUE
+    JudgeCondition    ${addr.status_code}==200    ${addr.status_code}!=200
+    Delete All Sessions
+
+*** Keywords ***
+ReturnParameter
+    [Arguments]    ${a}    ${b}    ${c}
+    ${TYPE}    get from dictionary    ${responsedata[0]}    ${a}
+    ${MONTH_VALUE}    get from dictionary    ${responsedata[0]}    ${b}
+    ${YEAR_VALUE}    get from dictionary    ${responsedata[0]}    ${c}
+
+JudgeCondition
+    [Arguments]    ${conditions-1}    ${conditions-2}
+    Run Keyword If    ${conditions-1}    log    其他财务指标查询成功
+    ...    ELSE IF    ${conditions-2}    log    其他财务指标查询失败
