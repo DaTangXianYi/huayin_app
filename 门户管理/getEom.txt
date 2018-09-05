@@ -1,0 +1,50 @@
+*** Settings ***
+Documentation     获取生产概况指标
+Test Timeout      2 minutes    # 2分钟
+Library           RequestsLibrary
+Library           Collections
+Library           DatabaseLibrary
+Library           OperatingSystem
+Resource          ../业务关键字.txt
+
+*** Test Cases ***
+getEom_01
+    [Documentation]    获取生产概况指标
+    Set Environment Variable    NLS_LANG    SIMPLIFIED_CHINESE_CHINA_UTF8
+    Create Session    api    http://222.240.200.213:8080
+    ${addr}    get request    api    yth-mh/eom/getEom
+    Should Be Equal As Strings    ${addr.status_code}    200    #判断请求响应是否为200，服务器成功返回网页
+    ${responsedate}    to json    ${addr.content}    #使用to json将string转换为json串
+    ${dict0}    get from list    ${responsedate}    0
+    ${orgName}    get from dictionary    ${dict0}    orgName
+    ${timeType}    get from dictionary    ${dict0}    timeType
+    ${gdmh}    get from dictionary    ${dict0}    gdmh
+    ${cydl}    get from dictionary    ${dict0}    cydl
+    ${yh}    get from dictionary    ${dict0}    yh
+    ${hdlyxs}    get from dictionary    ${dict0}    hdlyxs
+    ${fdl}    get from dictionary    ${dict0}    fdl
+    ${createTime}    get from dictionary    ${dict0}    createTime
+    Delete All Sessions
+
+getEom_02
+    [Documentation]    获取生产概况指标
+    SessionCreate    http://222.240.200.213:8080
+    RequestGet    yth-mh/eom/getEom    200
+    ReturnParameter    orgName    timeType    gdmh    cydl    yh    hdlyxs
+    ...    fdl    createTime
+    Delete All Sessions
+
+*** Keywords ***
+ReturnParameter
+    [Arguments]    ${a}    ${b}    ${c}    ${d}    ${e}    ${f}
+    ...    ${g}    ${h}
+    ${responsedate}    to json    ${addr.content}
+    ${dict0}    get from list    ${responsedate}    0
+    ${orgName}    get from dictionary    ${dict0}    ${a}
+    ${timeType}    get from dictionary    ${dict0}    ${b}
+    ${gdmh}    get from dictionary    ${dict0}    ${c}
+    ${cydl}    get from dictionary    ${dict0}    ${d}
+    ${yh}    get from dictionary    ${dict0}    ${e}
+    ${hdlyxs}    get from dictionary    ${dict0}    ${f}
+    ${fdl}    get from dictionary    ${dict0}    ${g}
+    ${createTime}    get from dictionary    ${dict0}    ${h}

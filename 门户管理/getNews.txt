@@ -1,0 +1,113 @@
+*** Settings ***
+Documentation     获取图片新闻列表
+Test Timeout      2 minutes    # 2分钟
+Library           RequestsLibrary
+Library           Collections
+Library           DatabaseLibrary
+Library           OperatingSystem
+Resource          ../业务关键字.txt
+
+*** Test Cases ***
+getNews_01
+    [Documentation]    获取图片新闻列表
+    Set Environment Variable    NLS_LANG    SIMPLIFIED_CHINESE_CHINA_UTF8
+    Create Session    api    http://222.240.200.213:8080
+    ${addr}    get request    api    yth-mh/news/getNews
+    Should Be Equal As Strings    ${addr.status_code}    200    #判断请求响应是否为200，服务器成功返回网页
+    ${responsedate}    to json    ${addr.content}    #使用to json将string转换为json串
+    ${dict0}    get from list    ${responsedate}    0
+    ${id}    get from dictionary    ${dict0}    id
+    ${classid}    get from dictionary    ${dict0}    classid
+    ${ttid}    get from dictionary    ${dict0}    ttid
+    ${onclick}    get from dictionary    ${dict0}    onclick
+    ${plnum}    get from dictionary    ${dict0}    plnum
+    ${totaldown}    get from dictionary    ${dict0}    totaldown
+    ${newspath}    get from dictionary    ${dict0}    newspath
+    ${filename}    get from dictionary    ${dict0}    filename
+    ${userid}    get from dictionary    ${dict0}    userid
+    ${username}    get from dictionary    ${dict0}    username
+    ${firsttitle}    get from dictionary    ${dict0}    firsttitle
+    ${isgood}    get from dictionary    ${dict0}    isgood
+    ${ispic}    get from dictionary    ${dict0}    ispic
+    ${istop}    get from dictionary    ${dict0}    istop
+    ${isqf}    get from dictionary    ${dict0}    isqf
+    ${ismember}    get from dictionary    ${dict0}    ismember
+    ${isurl}    get from dictionary    ${dict0}    isurl
+    ${truetime}    get from dictionary    ${dict0}    truetime
+    ${lastdotime}    get from dictionary    ${dict0}    lastdotime
+    ${havehtml}    get from dictionary    ${dict0}    havehtml
+    ${groupid}    get from dictionary    ${dict0}    groupid
+    ${userfen}    get from dictionary    ${dict0}    userfen
+    ${titlefont}    get from dictionary    ${dict0}    titlefont
+    ${titleurl}    get from dictionary    ${dict0}    titleurl
+    ${stb}    get from dictionary    ${dict0}    stb
+    ${fstb}    get from dictionary    ${dict0}    fstb
+    ${restb}    get from dictionary    ${dict0}    restb
+    ${keyboard}    get from dictionary    ${dict0}    keyboard
+    ${title}    get from dictionary    ${dict0}    title
+    ${newstime}    get from dictionary    ${dict0}    newstime
+    ${titlepic}    get from dictionary    ${dict0}    titlepic
+    ${eckuid}    get from dictionary    ${dict0}    eckuid
+    ${ftitle}    get from dictionary    ${dict0}    ftitle
+    ${smalltext}    get from dictionary    ${dict0}    smalltext
+    ${diggtop}    get from dictionary    ${dict0}    diggtop
+    Delete All Sessions
+
+getNews_02
+    [Documentation]    获取图片新闻列表
+    UTF8Environment
+    SessionCreate    http://222.240.200.213:8080
+    RequestGet    yth-mh/news/getNews    200
+    ReturnParameter    id    classid    ttid    onclick    plnum    totaldown
+    ...    newspath    filename    userid    username    firsttitle    isgood
+    ...    ispic    istop    isqf    ismember    isurl    truetime
+    ...    lastdotime    havehtml    groupid    userfen    titlefont    titleurl
+    ...    stb    fstb    restb    keyboard    title    newstime
+    ...    titlepic    eckuid    ftitle    smalltext    diggtop
+    Delete All Sessions
+
+*** Keywords ***
+ReturnParameter
+    [Arguments]    ${a}    ${b}    ${c}    ${d}    ${e}    ${f}
+    ...    ${g}    ${h}    ${i}    ${j}    ${k}    ${l}
+    ...    ${m}    ${n}    ${o}    ${p}    ${q}    ${r}
+    ...    ${s}    ${t}    ${u}    ${v}    ${w}    ${x}
+    ...    ${y}    ${z}    ${a1}    ${b1}    ${c1}    ${d1}
+    ...    ${e1}    ${f1}    ${g1}    ${h1}    ${i1}
+    ${responsedate}    to json    ${addr.content}
+    ${dict0}    get from list    ${responsedate}    0
+    ${id}    get from dictionary    ${dict0}    ${a}
+    ${classid}    get from dictionary    ${dict0}    ${b}
+    ${ttid}    get from dictionary    ${dict0}    ${c}
+    ${onclick}    get from dictionary    ${dict0}    ${d}
+    ${plnum}    get from dictionary    ${dict0}    ${e}
+    ${totaldown}    get from dictionary    ${dict0}    ${f}
+    ${newspath}    get from dictionary    ${dict0}    ${g}
+    ${filename}    get from dictionary    ${dict0}    ${h}
+    ${userid}    get from dictionary    ${dict0}    ${i}
+    ${username}    get from dictionary    ${dict0}    ${j}
+    ${firsttitle}    get from dictionary    ${dict0}    ${k}
+    ${isgood}    get from dictionary    ${dict0}    ${l}
+    ${ispic}    get from dictionary    ${dict0}    ${m}
+    ${istop}    get from dictionary    ${dict0}    ${n}
+    ${isqf}    get from dictionary    ${dict0}    ${o}
+    ${ismember}    get from dictionary    ${dict0}    ${p}
+    ${isurl}    get from dictionary    ${dict0}    ${q}
+    ${truetime}    get from dictionary    ${dict0}    ${r}
+    ${lastdotime}    get from dictionary    ${dict0}    ${s}
+    ${havehtml}    get from dictionary    ${dict0}    ${t}
+    ${groupid}    get from dictionary    ${dict0}    ${u}
+    ${userfen}    get from dictionary    ${dict0}    ${v}
+    ${titlefont}    get from dictionary    ${dict0}    ${w}
+    ${titleurl}    get from dictionary    ${dict0}    ${x}
+    ${stb}    get from dictionary    ${dict0}    ${y}
+    ${fstb}    get from dictionary    ${dict0}    ${z}
+    ${restb}    get from dictionary    ${dict0}    ${a1}
+    ${keyboard}    get from dictionary    ${dict0}    ${b1}
+    ${title}    get from dictionary    ${dict0}    ${c1}
+    ${newstime}    get from dictionary    ${dict0}    ${d1}
+    ${titlepic}    get from dictionary    ${dict0}    ${e1}
+    ${eckuid}    get from dictionary    ${dict0}    ${f1}
+    ${ftitle}    get from dictionary    ${dict0}    ${g1}
+    ${smalltext}    get from dictionary    ${dict0}    ${h1}
+    ${diggtop}    get from dictionary    ${dict0}    ${i1}

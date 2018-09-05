@@ -1,0 +1,61 @@
+*** Settings ***
+Documentation     获取新闻详情
+Test Timeout      2 minutes    # 2分钟
+Library           RequestsLibrary
+Library           Collections
+Library           DatabaseLibrary
+Library           OperatingSystem
+Resource          ../业务关键字.txt
+
+*** Variables ***
+${id}             4172    # 新闻ID
+
+*** Test Cases ***
+getNews4172_01
+    [Documentation]    获取新闻详情
+    Set Environment Variable    NLS_LANG    SIMPLIFIED_CHINESE_CHINA_UTF8
+    Create Session    api    http://222.240.200.213:8080
+    ${addr}    get request    api    yth-mh/news/getNews/${id}
+    Should Be Equal As Strings    ${addr.status_code}    200    #判断请求响应是否为200，服务器成功返回网页
+    ${responsedate}    to json    ${addr.content}    #使用to json将string转换为json串
+    ${keys}    Get Dictionary Keys    ${responsedate}
+    ${items}    Get Dictionary items    ${responsedate}
+    ${values}    Get Dictionary values    ${responsedate}
+    ${id}    get from dictionary    ${responsedate}    id
+    ${classid}    get from dictionary    ${responsedate}    classid
+    ${keyid}    get from dictionary    ${responsedate}    keyid
+    ${dokey}    get from dictionary    ${responsedate}    dokey
+    ${newstempid}    get from dictionary    ${responsedate}    newstempid
+    ${closepl}    get from dictionary    ${responsedate}    closepl
+    ${infotags}    get from dictionary    ${responsedate}    infotags
+    ${writer}    get from dictionary    ${responsedate}    writer
+    ${befrom}    get from dictionary    ${responsedate}    befrom
+    ${newstext}    get from dictionary    ${responsedate}    newstext
+    Delete All Sessions
+
+getNews4172_02
+    [Documentation]    获取新闻详情
+    SessionCreate    http://222.240.200.213:8080
+    RequestGet    yth-mh/news/getNews/${id}    200
+    ReturnParameter    id    classid    keyid    dokey    newstempid    closepl
+    ...    infotags    writer    befrom    newstext
+    Delete All Sessions
+
+*** Keywords ***
+ReturnParameter
+    [Arguments]    ${a}    ${b}    ${c}    ${d}    ${e}    ${f}
+    ...    ${g}    ${h}    ${i}    ${j}
+    ${responsedate}    to json    ${addr.content}
+    ${keys}    Get Dictionary Keys    ${responsedate}
+    ${items}    Get Dictionary items    ${responsedate}
+    ${values}    Get Dictionary values    ${responsedate}
+    ${id}    get from dictionary    ${responsedate}    ${a}
+    ${classid}    get from dictionary    ${responsedate}    ${b}
+    ${keyid}    get from dictionary    ${responsedate}    ${c}
+    ${dokey}    get from dictionary    ${responsedate}    ${d}
+    ${newstempid}    get from dictionary    ${responsedate}    ${e}
+    ${closepl}    get from dictionary    ${responsedate}    ${f}
+    ${infotags}    get from dictionary    ${responsedate}    ${g}
+    ${writer}    get from dictionary    ${responsedate}    ${h}
+    ${befrom}    get from dictionary    ${responsedate}    ${i}
+    ${newstext}    get from dictionary    ${responsedate}    ${j}
