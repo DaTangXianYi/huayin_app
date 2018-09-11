@@ -24,7 +24,7 @@ LoginEmail_01
     ${values}    Get Dictionary values    ${responsedate}
     ${attribute}    get from dictionary    ${responsedate}    attribute
     ${loginName}    get from dictionary    ${responsedate}    loginName
-    Connect To Database Using Custom Params    cx_Oracle    'hyoa_app','hyoa_app','192.168.20.12:1521/jreap_dev'
+    Connect To Database Using Custom Params    cx_Oracle    'hyoa_app','hyoa_app','192.168.20.12:1521/ORCL'
     ${result}    Query    select a.login_name from security_account a where a.id='${userId}'
     Should Be Equal As Strings    ${loginName}    ${result[0][0]}
     Disconnect From Database
@@ -38,7 +38,7 @@ LoginEmail_02
     SessionCreate    http://192.168.26.35:8080
     RequestGet    hyoa/camel/mapi/terminalRestService/LoginEmail?userId=${userId}    200
     ReturnParameter    attribute    loginName
-    OracleConnect    'hyoa_app','hyoa_app','192.168.20.12:1521/jreap_dev'    select a.login_name from security_account a where a.id='${userId}'
+    OracleConnect    'hyoa_app','hyoa_app','192.168.20.12:1521/ORCL'    select a.login_name from security_account a where a.id='${userId}'
     InquireDatabase
     Disconnect From Database
     Delete All Sessions

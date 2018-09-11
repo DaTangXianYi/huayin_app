@@ -50,7 +50,7 @@ getTerminalCountVOByTid_01
     ${manageTaskVOList}    get from dictionary    ${result}    manageTaskVOList
     ${taskId}    get from dictionary    ${manageTaskVOList[0]}    taskId
     ${taskName}    get from dictionary    ${manageTaskVOList[0]}    taskName
-    Connect To Database Using Custom Params    cx_Oracle    'hyoa_app','hyoa_app','192.168.20.12:1521/jreap_dev'
+    Connect To Database Using Custom Params    cx_Oracle    'hyoa_app','hyoa_app','192.168.20.12:1521/ORCL'
     ${rs}    Query    select (select t.description from SECURITY_ACCOUNT t WHERE t.description='${userId}') as userId,(select t.id from HYOA_DOC_DISPATCH t WHERE t.id='${terId}') as terId,(select t.id from (select t.business_key,max(t.id) id from BPM_RU_TASK t group by t.business_key) t WHERE t.id='${taskId}') as taskId,(select t.process_instance_id from BPM_HI_ACTIVITY_EVENT t WHERE t.process_instance_id='${processId}' and rownum=1) as processId FROM BPM_HI_ACTIVITY_EVENT d where rownum=1
     ${userId-1}    Set Variable    ${rs[0][0]}
     ${terId-1}    Set Variable    ${rs[0][1]}
@@ -61,7 +61,7 @@ getTerminalCountVOByTid_01
     Should Be Equal As Strings    ${taskId-1}    ${taskId}
     Should Be Equal As Strings    ${processId-1}    ${processId}
     Disconnect From Database
-    Connect To Database Using Custom Params    cx_Oracle    'hyoa_app','hyoa_app','192.168.20.12:1521/jreap_dev'
+    Connect To Database Using Custom Params    cx_Oracle    'hyoa_app','hyoa_app','192.168.20.12:1521/ORCL'
     ${ls}    Query    select t.id,t.title,t.sponsor,t.record_no,t.create_time,t.title,t.file_url from HYOA_DOC_DISPATCH t where t.id='${officialId}' and rownum=1
     ${officialId-1}    Set Variable    ${ls[0][0]}
     ${officialName-1}    decode    ${ls[0][1]}    GBK
@@ -78,7 +78,7 @@ getTerminalCountVOByTid_01
     Should Be Equal As Strings    ${fileName-1}    ${fileName}
     Should Be Equal As Strings    ${fileBody-1}    ${fileBody}
     Disconnect From Database
-    Connect To Database Using Custom Params    cx_Oracle    'hyoa_app','hyoa_app','192.168.20.12:1521/jreap_dev'
+    Connect To Database Using Custom Params    cx_Oracle    'hyoa_app','hyoa_app','192.168.20.12:1521/ORCL'
     ${xs}    Query    select (select a.name from bpm_account a where a.id = t.account_id) as manageName,t.handler_descrip as manageType,TO_CHAR(t.end_time,'YYYY-MM-DD')as manageTime,t.comment_ as manageAdvance,t.event_name as manageEvent,t.activity_name as manegeActivity from BPM_HI_ACTIVITY_EVENT t where t.process_instance_id='${processId}' and t.handler_descrip='${manageType}'
     ${manageName-1}    decode    ${xs[0][0]}    GBK
     ${manageType-1}    decode    ${xs[0][1]}    GBK
@@ -110,13 +110,13 @@ getTerminalCountVOByTid_02
     ...    dispitchOrg    officialNum    officialTime    fileName    fileBody    dqTaskName
     ...    dqTaskId    attFileVOList    manageAdvanceVOList    manageName    manageTime    manageType
     ...    manegeActivity    manageAdvance    manageEvent    manageTaskVOList    taskId    taskName
-    OracleConnect    'hyoa_app','hyoa_app','192.168.20.12:1521/jreap_dev'    select (select t.description from SECURITY_ACCOUNT t WHERE t.description='${userId}') as userId,(select t.id from HYOA_DOC_DISPATCH t WHERE t.id='${terId}') as terId,(select t.id from (select t.business_key,max(t.id) id from BPM_RU_TASK t group by t.business_key) t WHERE t.id='${taskId}') as taskId,(select t.process_instance_id from BPM_HI_ACTIVITY_EVENT t WHERE t.process_instance_id='${processId}' and rownum=1) as processId FROM BPM_HI_ACTIVITY_EVENT d where rownum=1
+    OracleConnect    'hyoa_app','hyoa_app','192.168.20.12:1521/ORCL'    select (select t.description from SECURITY_ACCOUNT t WHERE t.description='${userId}') as userId,(select t.id from HYOA_DOC_DISPATCH t WHERE t.id='${terId}') as terId,(select t.id from (select t.business_key,max(t.id) id from BPM_RU_TASK t group by t.business_key) t WHERE t.id='${taskId}') as taskId,(select t.process_instance_id from BPM_HI_ACTIVITY_EVENT t WHERE t.process_instance_id='${processId}' and rownum=1) as processId FROM BPM_HI_ACTIVITY_EVENT d where rownum=1
     InquireDatabase1
     Disconnect From Database
-    OracleConnect    'hyoa_app','hyoa_app','192.168.20.12:1521/jreap_dev'    select t.id,t.title,t.sponsor,t.record_no,t.create_time,t.title,t.file_url from HYOA_DOC_DISPATCH t where t.id='${officialId}' and rownum=1
+    OracleConnect    'hyoa_app','hyoa_app','192.168.20.12:1521/ORCL'    select t.id,t.title,t.sponsor,t.record_no,t.create_time,t.title,t.file_url from HYOA_DOC_DISPATCH t where t.id='${officialId}' and rownum=1
     InquireDatabase2
     Disconnect From Database
-    OracleConnect    'hyoa_app','hyoa_app','192.168.20.12:1521/jreap_dev'    select (select a.name from bpm_account a where a.id = t.account_id) as manageName,t.handler_descrip as manageType,TO_CHAR(t.end_time,'YYYY-MM-DD')as manageTime,t.comment_ as manageAdvance,t.event_name as manageEvent,t.activity_name as manegeActivity from BPM_HI_ACTIVITY_EVENT t where t.process_instance_id='${processId}' and t.handler_descrip='${manageType}'
+    OracleConnect    'hyoa_app','hyoa_app','192.168.20.12:1521/ORCL'    select (select a.name from bpm_account a where a.id = t.account_id) as manageName,t.handler_descrip as manageType,TO_CHAR(t.end_time,'YYYY-MM-DD')as manageTime,t.comment_ as manageAdvance,t.event_name as manageEvent,t.activity_name as manegeActivity from BPM_HI_ACTIVITY_EVENT t where t.process_instance_id='${processId}' and t.handler_descrip='${manageType}'
     InquireDatabase3
     Disconnect From Database
     JudgeCondition    ${addr.status_code}==200 and '${flag}'=='success' and '${exception}'=='' and ${statusCode}==0    ${addr.status_code}!=200    '${flag}'=='flase'    '${exception}'!=''    ${statusCode}!=0

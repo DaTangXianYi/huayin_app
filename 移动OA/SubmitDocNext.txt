@@ -1,10 +1,11 @@
 *** Settings ***
+Documentation     公文办理
 Test Timeout      2 minutes    # 2分钟
 Library           RequestsLibrary
 Library           Collections
-Resource          ../业务关键字.txt
 Library           DatabaseLibrary
 Library           OperatingSystem
+Resource          ../业务关键字.txt
 
 *** Variables ***
 ${accountId}      ff8080816218fa3801626f5e554c00e0    # 用户ID
@@ -15,11 +16,12 @@ ${taskId}         402899906536c641016537f458f90114    # 当前节点（任务）
 
 *** Test Cases ***
 SubmitDocNext_01
+    [Documentation]    公文办理成功
+    [Timeout]    1 minute    # 1分钟
     Set Environment Variable    NLS_LANG    SIMPLIFIED_CHINESE_CHINA_UTF8
-    Create Session    api    http://192.168.25.16:8099
+    Create Session    api    http://192.168.26.35:8080
     ${addr}    Get Request    api    hyoa/camel/mapi/hyoaMobileService/SubmitDocNext?accountId=${accountId}&docId=${docId}&content=${content}&addActor=${addActor}&taskId=${taskId}
     Should Be Equal As Integers    ${addr.status_code}    200
-    log    ${addr.content}
     ${responsedata}    to json    ${addr.content}
     ${keys}    Get Dictionary Keys    ${responsedata}
     ${items}    Get Dictionary Keys    ${responsedata}
@@ -27,7 +29,7 @@ SubmitDocNext_01
     ${flag}    get from dictionary    ${responsedata}    flag
     ${exception}    get from dictionary    ${responsedata}    exception
     ${statusCode}    get from dictionary    ${responsedata}    statusCode
-    Connect To Database Using Custom Params    cx_Oracle    'hyoa20180602','hyoa20180602','192.168.25.11:1521/devorcl'
+    Connect To Database Using Custom Params    cx_Oracle    'hyoa_app','hyoa_app','192.168.20.12:1521/ORCL'
     ${rs}    Query    select (select t.description from SECURITY_ACCOUNT t WHERE t.description='${accountId}') as accountId,(select t.id from HYOA_DOC_DISPATCH t WHERE t.id='${docId}') as docId,(select t.id from (select t.business_key,max(t.id) id from BPM_RU_TASK t group by t.business_key) t WHERE t.id='${taskId}') as taskId FROM BPM_HI_ACTIVITY_EVENT d where rownum=1
     ${accountId-1}    Set Variable    ${rs[0][0]}
     ${docId-1}    Set Variable    ${rs[0][1]}
@@ -44,18 +46,21 @@ SubmitDocNext_01
     Delete All Sessions
 
 SubmitDocNext_02
-    UTF8环境
-    Session创建    http://192.168.25.16:8099
-    Get请求    hyoa/camel/mapi/hyoaMobileService/SubmitDocNext?accountId=${accountId}&docId=${docId}&content=${content}&addActor=${addActor}&taskId=${taskId}    200
-    公文办理返回的参数    flag    exception    statusCode
-    Oracle连接    'hyoa20180602','hyoa20180602','192.168.25.11:1521/devorcl'    select (select t.description from SECURITY_ACCOUNT t WHERE t.description='${accountId}') as accountId,(select t.id from HYOA_DOC_DISPATCH t WHERE t.id='${docId}') as docId,(select t.id from (select t.business_key,max(t.id) id from BPM_RU_TASK t group by t.business_key) t WHERE t.id='${taskId}') as taskId FROM BPM_HI_ACTIVITY_EVENT d where rownum=1
-    公文处理查询数据库
+    [Documentation]    公文办理成功：分层
+    [Template]    RequestGet
+    [Timeout]    1 minute    # 1分钟
+    UTF8Environment
+    SessionCreate    http://192.168.26.35:8080
+    RequestGet    hyoa/camel/mapi/hyoaMobileService/SubmitDocNext?accountId=${accountId}&docId=${docId}&content=${content}&addActor=${addActor}&taskId=${taskId}    200
+    ReturnParameter    flag    exception    statusCode
+    OracleConnect    'hyoa_app','hyoa_app','192.168.20.12:1521/ORCL'    select (select t.description from SECURITY_ACCOUNT t WHERE t.description='${accountId}') as accountId,(select t.id from HYOA_DOC_DISPATCH t WHERE t.id='${docId}') as docId,(select t.id from (select t.business_key,max(t.id) id from BPM_RU_TASK t group by t.business_key) t WHERE t.id='${taskId}') as taskId FROM BPM_HI_ACTIVITY_EVENT d where rownum=1
+    InquireDatabase
     Disconnect From Database
-    公文办理判断条件    ${addr.status_code}==200 and '${flag}'=='success' and '${exception}'=='' and ${statusCode}==0    ${addr.status_code}!=200    '${flag}'=='flase'    '${exception}'!=''    ${statusCode}!=0
+    JudgeCondition    ${addr.status_code}==200 and '${flag}'=='success' and '${exception}'=='' and ${statusCode}==0    ${addr.status_code}!=200    '${flag}'=='flase'    '${exception}'!=''    ${statusCode}!=0
     Delete All Sessions
 
 *** Keywords ***
-公文办理返回的参数
+ReturnParameter
     [Arguments]    ${a}    ${b}    ${c}
     ${responsedata}    to json    ${addr.content}
     ${keys}    Get Dictionary Keys    ${responsedata}
@@ -65,7 +70,7 @@ SubmitDocNext_02
     ${exception}    get from dictionary    ${responsedata}    ${b}
     ${statusCode}    get from dictionary    ${responsedata}    ${c}
 
-公文处理查询数据库
+InquireDatabase
     ${accountId-1}    Set Variable    ${rs[0][0]}
     ${docId-1}    Set Variable    ${rs[0][1]}
     ${taskId-1}    Set Variable    ${rs[0][2]}
@@ -73,7 +78,7 @@ SubmitDocNext_02
     Should Be Equal As Strings    ${docId-1}    ${docId}
     Should Be Equal As Strings    ${taskId-1}    ${taskId}
 
-公文办理判断条件
+JudgeCondition
     [Arguments]    ${conditions-1}    ${conditions-2}    ${conditions-3}    ${conditions-4}    ${conditions-5}
     Run Keyword If    ${conditions-1}    log    公文办理成功
     ...    ELSE IF    ${conditions-2}    log    公文办理失败

@@ -1,18 +1,23 @@
 *** Settings ***
-Test Timeout      2 minutes    # 2分钟
+Documentation     机组主要参数
+Test Timeout      1 minutes    # 1分钟
 Library           RequestsLibrary
 Library           Collections
 Library           DatabaseLibrary
-Resource          ../业务关键字.txt
 Library           OperatingSystem
+Resource          ../业务关键字.txt
+
+*** Variables ***
+${deptGuid}       98cb3257-e332-404c-b4f9-f886c2a61dce    #电厂GUID
+${energyType}     0    #0 火电;1 水电
 
 *** Test Cases ***
 GetMainParamInfo
+    [Documentation]    机组主要参数成功
+    [Timeout]    1 minute    # 1分钟
     Set Environment Variable    NLS_LANG    SIMPLIFIED_CHINESE_CHINA_UTF8
-    Create Session    api    http://10.232.234.210:8800
-    ${deptGuid}    Set Variable    98cb3257-e332-404c-b4f9-f886c2a61dce    #设置参数deptGuid
-    ${energyType}    Set Variable    0    #设置参数energyType
-    ${addr}    get request    api    HyAppService.svc/GetMainParamInfo?deptGuid=${deptGuid}&energyType=${energyType}
+    Create Session    api    http://192.168.20.22:8099
+    ${addr}    get request    api    RISAPP/HyAppService.svc/GetMainParamInfo?deptGuid=${deptGuid}&energyType=${energyType}
     Should Be Equal As Strings    ${addr.status_code}    200    #判断请求响应是否为200，服务器成功返回网页
     ${responsedate}    to json    ${addr.content}    #使用to json将string转换为json串
     ${keys}    Get Dictionary Keys    ${responsedate}

@@ -8,7 +8,7 @@ Library           OperatingSystem
 Resource          ../业务关键字.txt
 
 *** Variables ***
-${papandid}       ff80808164d0c86d0164edeb7ffd0044
+${papandid}       888888888
 
 *** Test Cases ***
 BoomBleeOa_01
@@ -25,7 +25,7 @@ BoomBleeOa_01
     ${flag}    get from dictionary    ${responsedata}    flag
     ${exception}    get from dictionary    ${responsedata}    exception
     ${statusCode}    get from dictionary    ${responsedata}    statusCode
-    Connect To Database Using Custom Params    cx_Oracle    'hyoa_app','hyoa_app','192.168.20.12:1521/jreap_dev'
+    Connect To Database Using Custom Params    cx_Oracle    'hyoa_app','hyoa_app','192.168.20.12:1521/ORCL'
     ${rs}    Query    select t.description from SECURITY_ACCOUNT t WHERE t.description='${papandid}'
     ${description}    decode    ${rs[0][0]}    GBK
     Should Be Equal As Strings    ${description}    ${papandid}
@@ -44,7 +44,7 @@ BoomBleeOa_02
     SessionCreate    http://192.168.26.35:8080
     RequestGet    hyoa/camel/mapi/mobileRestWebService/BoomBleeOa?papandid=${papandid}    200
     ReturnParameter    flag    exception    statusCode
-    OracleConnect    'hyoa_app','hyoa_app','192.168.20.12:1521/jreap_dev'    select t.description from SECURITY_ACCOUNT t WHERE t.description='${papandid}'
+    OracleConnect    'hyoa_app','hyoa_app','192.168.20.12:1521/ORCL'    select t.description from SECURITY_ACCOUNT t WHERE t.description='${papandid}'
     InquireDatabase
     Disconnect From Database
     JudgeCondition    ${addr.status_code}==200 and '${flag}'=='success' and '${exception}'=='' and ${statusCode}==0    ${addr.status_code}!=200    '${flag}'=='flase'    '${exception}'!=''    ${statusCode}!=0

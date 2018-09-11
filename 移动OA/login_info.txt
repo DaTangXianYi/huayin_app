@@ -29,7 +29,7 @@ LoginInfo_01
     ${loginName}    get from dictionary    ${responsedata}    loginName
     ${description}    get from dictionary    ${responsedata}    description
     ${status}    get from dictionary    ${responsedata}    status
-    Connect To Database Using Custom Params    cx_Oracle    'hyoa_app','hyoa_app','192.168.20.12:1521/jreap_dev'
+    Connect To Database Using Custom Params    cx_Oracle    'hyoa_app','hyoa_app','192.168.20.12:1521/ORCL'
     ${rs}    Query    select t.id from SECURITY_ACCOUNT t WHERE t.login_name='${loginName}'
     ${id-1}    Set Variable    ${rs[0][0]}
     Disconnect From Database
@@ -45,7 +45,7 @@ LoginInfo_02
     SessionCreate    http://192.168.26.35:8080
     RequestGet    hyoa/camel/mapi/mobileRestWebService/login_info?password=${password}&login_name=${login_name}&papandid=${papandid}    200
     ReturnParameter    id    loginName    description    status
-    OracleConnect    'hyoa_app','hyoa_app','192.168.20.12:1521/jreap_dev'    select t.id from SECURITY_ACCOUNT t WHERE t.login_name='${loginName}'
+    OracleConnect    'hyoa_app','hyoa_app','192.168.20.12:1521/ORCL'    select t.id from SECURITY_ACCOUNT t WHERE t.login_name='${loginName}'
     InquireDatabase
     Disconnect From Database
     JudgeCondition    ${status}==1 and ${addr.status_code}==200    ${status}!=1 and ${addr.status_code}!=200

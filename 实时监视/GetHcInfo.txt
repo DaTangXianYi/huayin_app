@@ -1,18 +1,23 @@
 *** Settings ***
-Test Timeout      2 minutes    # 2分钟
+Documentation     耗差信息
+Test Timeout      1 minutes    # 1分钟
 Library           RequestsLibrary
 Library           Collections
 Library           DatabaseLibrary
-Resource          ../业务关键字.txt
 Library           OperatingSystem
+Resource          ../业务关键字.txt
+
+*** Variables ***
+${userId}         ff8080816218fa3801626f5e554c00e0    #用户GUID
+${dataType}       real    #设置参数dataType：real实时值;day 日均值
 
 *** Test Cases ***
 GetHcInfo
+    [Documentation]    耗差信息成功
+    [Timeout]    1 minute    # 1分钟
     Set Environment Variable    NLS_LANG    SIMPLIFIED_CHINESE_CHINA_UTF8
-    Create Session    api    http://10.232.234.210:8800
-    ${userId}    Set Variable    ff8080816218fa3801626f5e554c00e0    #设置参数userId
-    ${dataType}    Set Variable    real    #设置参数dataType
-    ${addr}    get request    api    HyAppService.svc/GetHcInfo?userId=${userId}&dataType=${dataType}
+    Create Session    api    http://192.168.20.22:8099
+    ${addr}    get request    api    RISAPP/HyAppService.svc/GetHcInfo?userId=${userId}&dataType=${dataType}
     Should Be Equal As Strings    ${addr.status_code}    200    #判断请求响应是否为200，服务器成功返回网页
     ${responsedate}    to json    ${addr.content}    #使用to json将string转换为json串
     ${keys}    Get Dictionary Keys    ${responsedate}

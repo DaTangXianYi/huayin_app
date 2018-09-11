@@ -34,7 +34,7 @@ QueryDocCurrPerson_01
     ${dept}    get from dictionary    ${result}    dept
     ${orderno}    get from dictionary    ${result}    orderno
     ${accountId-1}    get from dictionary    ${result}    accountId
-    Connect To Database Using Custom Params    cx_Oracle    'hyoa_app','hyoa_app','192.168.20.12:1521/jreap_dev'
+    Connect To Database Using Custom Params    cx_Oracle    'hyoa_app','hyoa_app','192.168.20.12:1521/ORCL'
     ${rs}    Query    select (select t.id from HYOA_DOC_DISPATCH t WHERE t.id='${docId}') as docId,(select t.id from BPM_RU_TASK t WHERE t.id='${taskId}') as taskId,(select t.description from SECURITY_ACCOUNT t where t.description='${accountId}') as accountId FROM BPM_HI_ACTIVITY_EVENT d where rownum=1
     ${docId-1}    Set Variable    ${rs[0][0]}
     ${taskId-1}    Set Variable    ${rs[0][1]}
@@ -59,7 +59,7 @@ QueryDocCurrPerson_02
     RequestGet    hyoa/camel/mapi/hyoaMobileService/QueryDocCurrPerson?docId=${docId}&dispaOrReceipt=${dispaOrReceipt}&taskId=${taskId}&accountId=${accountId}    200
     ReturnParameter    flag    exception    statusCode    result    id    name
     ...    dept    orderno    accountId
-    OracleConnect    'hyoa_app','hyoa_app','192.168.20.12:1521/jreap_dev'    select (select t.id from HYOA_DOC_DISPATCH t WHERE t.id='${docId}') as docId,(select t.id from BPM_RU_TASK t WHERE t.id='${taskId}') as taskId,(select t.description from SECURITY_ACCOUNT t where t.description='${accountId}') as accountId FROM BPM_HI_ACTIVITY_EVENT d where rownum=1
+    OracleConnect    'hyoa_app','hyoa_app','192.168.20.12:1521/ORCL'    select (select t.id from HYOA_DOC_DISPATCH t WHERE t.id='${docId}') as docId,(select t.id from BPM_RU_TASK t WHERE t.id='${taskId}') as taskId,(select t.description from SECURITY_ACCOUNT t where t.description='${accountId}') as accountId FROM BPM_HI_ACTIVITY_EVENT d where rownum=1
     InquireDatabase
     Disconnect From Database
     JudgeCondition    ${addr.status_code}==200 and '${flag}'=='success' and '${exception}'=='' and ${statusCode}==0    ${addr.status_code}!=200    '${flag}'=='flase'    '${exception}'!=''    ${statusCode}!=0

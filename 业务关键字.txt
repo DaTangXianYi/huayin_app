@@ -16,7 +16,7 @@ RequestGet
     [Arguments]    ${url}    ${status_code}
     ${addr}    Get Request    api    ${url}
     Should Be Equal As Integers    ${addr.status_code}    ${status_code}
-    [Return]    ${addr.content}    # Get请求返回的对象${addr}
+    [Return]    ${addr}    ${addr.status_code}    ${addr.content}    # Get请求返回的对象${addr}
 
 OracleConnect
     [Arguments]    ${login_sign}    ${sql}

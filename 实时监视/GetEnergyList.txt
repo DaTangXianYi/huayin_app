@@ -1,19 +1,22 @@
 *** Settings ***
-Test Timeout      2 minutes    # 2分钟
+Documentation     主要参数
+Test Timeout      1 minutes    # 1分钟
 Library           RequestsLibrary
 Library           Collections
 Library           DatabaseLibrary
-Resource          ../业务关键字.txt
 Library           OperatingSystem
+Resource          ../业务关键字.txt
 
 *** Variables ***
 ${userId}         ff8080816218fa3801626f5e554c00e0    #用户GUID
 
 *** Test Cases ***
-GetEnergyList_01
+GetEnergyList
+    [Documentation]    主要参数成功
+    [Timeout]    1 minute    # 1分钟
     Set Environment Variable    NLS_LANG    SIMPLIFIED_CHINESE_CHINA_UTF8
-    Create Session    api    http://10.232.234.210:8800
-    ${addr}    get request    api    HyAppService.svc/GetEnergyList?userId=${userId}
+    Create Session    api    http://192.168.20.22:8099
+    ${addr}    get request    api    RISAPP/HyAppService.svc/GetEnergyList?userId=${userId}
     Should Be Equal As Integers    ${addr.status_code}    200
     ${responsedata}    to json    ${addr.content}
     ${Code-0}    get from dictionary    ${responsedata[0]}    Code
@@ -24,45 +27,6 @@ GetEnergyList_01
     ${Text-1}    get from dictionary    ${responsedata[1]}    Text
     ${Value-1}    get from dictionary    ${responsedata[1]}    Value
     ${energyType-1}    get from dictionary    ${responsedata[1]}    energyType
-    Comment    Connect To Database Using Custom Params    cx_Oracle    'dtRIS_APP_DEV_New','dtRIS_APP_DEV_New','10.232.234.212:1521/SSXT'
-    Comment    ${rs}    Query    select t.appuserid from dtris_reap_dev_new.employee t where t.appuserid='${userId}'
-    Comment    ${userId-1}    Set Variable    ${rs[0][0]}
-    Comment    Should Be Equal As Strings    ${userId-1}    ${userId}
-    Comment    Disconnect From Database
     Run Keyword if    ${addr.status_code}==200    log    主要参数查询成功
     ...    ELSE IF    ${addr.status_code} != 200    log    主要参数查询失败
     Delete All Sessions
-
-GetEnergyList_02
-    UTF8环境
-    Session创建    http://10.232.234.210:8800
-    Get请求    HyAppService.svc/GetEnergyList?userId=${userId}    200
-    主要参数返回的参数    Code    Text    Value    energyType    Code    Text
-    ...    Value    energyType
-    Comment    Oracle连接    'dtRIS_APP_DEV_New','dtRIS_APP_DEV_New','10.232.234.212:1521/SSXT'    select t.appuserid from dtris_reap_dev_new.employee t where t.appuserid='${userId}'
-    Comment    主要参数查询数据库
-    Comment    Disconnect From Database
-    主要参数判断条件    ${status}==1 and ${addr.status_code}==200    ${status}!=1 and ${addr.status_code}!=200
-    Delete All Sessions
-
-*** Keywords ***
-主要参数返回的参数
-    [Arguments]    ${a}    ${b}    ${c}    ${d}    ${e}    ${f}
-    ${responsedata}    to json    ${addr.content}
-    ${Code-0}    get from dictionary    ${responsedata[0]}    Code
-    ${Text-0}    get from dictionary    ${responsedata[0]}    Text
-    ${Value-0}    get from dictionary    ${responsedata[0]}    Value
-    ${energyType-0}    get from dictionary    ${responsedata[0]}    energyType
-    ${Code-1}    get from dictionary    ${responsedata[1]}    Code
-    ${Text-1}    get from dictionary    ${responsedata[1]}    Text
-    ${Value-1}    get from dictionary    ${responsedata[1]}    Value
-    ${energyType-1}    get from dictionary    ${responsedata[1]}    energyType
-
-主要参数查询数据库
-    ${userId-1}    Set Variable    ${rs[0][0]}
-    Should Be Equal As Strings    ${userId-1}    ${userId}
-
-主要参数判断条件
-    [Arguments]    ${conditions-1}    ${conditions-2}
-    Run Keyword if    ${conditions-1}    log    主要参数查询成功
-    ...    ELSE IF    ${conditions-2}    log    主要参数查询失败

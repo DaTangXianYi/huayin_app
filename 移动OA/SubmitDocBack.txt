@@ -1,10 +1,11 @@
 *** Settings ***
+Documentation     公文退回
 Test Timeout      2 minutes    # 2分钟
 Library           RequestsLibrary
 Library           Collections
-Resource          ../业务关键字.txt
 Library           DatabaseLibrary
 Library           OperatingSystem
+Resource          ../业务关键字.txt
 
 *** Variables ***
 ${taskId}         4028999064f80a5e0164f98e4d2e0071    # 当前节点ID
@@ -13,8 +14,10 @@ ${content}        哈哈哈    # 办理意见
 
 *** Test Cases ***
 SubmitDocBack-01
+    [Documentation]    公文退回成功
+    [Timeout]    1 minute    # 1分钟
     Set Environment Variable    NLS_LANG    SIMPLIFIED_CHINESE_CHINA_UTF8
-    Create Session    api    http://192.168.25.16:8099
+    Create Session    api    http://192.168.26.35:8080
     ${addr}    Get Request    api    hyoa/camel/mapi/terminalRestService/SubmitDocBack?taskId=${taskId}&userId=${userId}&content=${content}
     Should Be Equal As Integers    ${addr.status_code}    200
     ${responsedata}    to json    ${addr.content}
@@ -23,7 +26,7 @@ SubmitDocBack-01
     ${values}    Get Dictionary Keys    ${responsedata}
     ${flag}    get from dictionary    ${responsedata}    flag
     ${exception}    get from dictionary    ${responsedata}    exception
-    Connect To Database Using Custom Params    cx_Oracle    'hyoa20180602','hyoa20180602','192.168.25.11:1521/devorcl'
+    Connect To Database Using Custom Params    cx_Oracle    'hyoa_app','hyoa_app','192.168.20.12:1521/ORCL'
     ${rs}    Query    select t.id from (select t.business_key,max(t.id) id from BPM_RU_TASK t group by t.business_key) t WHERE t.id='${taskId}'
     ${taskId-1}    Set Variable    ${rs[0][0]}
     Should Be Equal As Strings    ${taskId-1}    ${taskId}
@@ -35,18 +38,21 @@ SubmitDocBack-01
     Delete All Sessions
 
 SubmitDocBack-02
-    UTF8环境
-    Session创建    http://192.168.25.16:8099
-    Get请求    hyoa/camel/mapi/terminalRestService/SubmitDocBack?taskId=${taskId}&userId=${userId}&content=${content}    200
-    公文退回返回的参数    flag    exception
-    Oracle连接    ''hyoa20180602','hyoa20180602','192.168.25.11:1521/devorcl'    select t.id from (select t.business_key,max(t.id) id from BPM_RU_TASK t group by t.business_key) t WHERE t.id='${taskId}'
-    公文退回查询数据库
+    [Documentation]    公文退回成功:分层
+    [Template]    RequestGet
+    [Timeout]    1 minute    # 1分钟
+    UTF8Environment
+    SessionCreate    http://192.168.26.35:8080
+    RequestGet    hyoa/camel/mapi/terminalRestService/SubmitDocBack?taskId=${taskId}&userId=${userId}&content=${content}    200
+    ReturnParameter    flag    exception
+    OracleConnect    'hyoa_app','hyoa_app','192.168.20.12:1521/ORCL'    select t.id from (select t.business_key,max(t.id) id from BPM_RU_TASK t group by t.business_key) t WHERE t.id='${taskId}'
+    InquireDatabase
     Disconnect From Database
-    公文退回判断条件    ${addr.status_code}==200 and '${flag}'=='success' and '${exception}'==''    ${addr.status_code}!=200    '${flag}'=='flase'    '${exception}'!=''
+    JudgeCondition    ${addr.status_code}==200 and '${flag}'=='success' and '${exception}'==''    ${addr.status_code}!=200    '${flag}'=='flase'    '${exception}'!=''
     Delete All Sessions
 
 *** Keywords ***
-公文退回返回的参数
+ReturnParameter
     [Arguments]    ${a}    ${b}
     ${responsedata}    to json    ${addr.content}
     ${keys}    Get Dictionary Keys    ${responsedata}
@@ -55,11 +61,11 @@ SubmitDocBack-02
     ${flag}    get from dictionary    ${responsedata}    ${a}
     ${exception}    get from dictionary    ${responsedata}    ${b}
 
-公文退回查询数据库
+InquireDatabase
     ${taskId-1}    Set Variable    ${rs[0][0]}
     Should Be Equal As Strings    ${taskId-1}    ${taskId}
 
-公文退回判断条件
+JudgeCondition
     [Arguments]    ${conditions-1}    ${conditions-2}    ${conditions-3}    ${conditions-4}
     Run Keyword If    ${conditions-1}    log    公文退回成功
     ...    ELSE IF    ${conditions-2}    log    公文退回失败

@@ -35,7 +35,7 @@ getTerminalTalkByTid_01
     ${endTime}    get from dictionary    ${result}    endTime
     ${taskTypeName2}    get from dictionary    ${result}    taskTypeName2
     ${content}    get from dictionary    ${result}    content
-    Connect To Database Using Custom Params    cx_Oracle    'hyoa_app','hyoa_app','192.168.20.12:1521/jreap_dev'
+    Connect To Database Using Custom Params    cx_Oracle    'hyoa_app','hyoa_app','192.168.20.12:1521/ORCL'
     ${rs}    Query    select (select a.description from SECURITY_ACCOUNT a WHERE a.description='${accountId}' and rownum=1) as accountId,(select b.id from hyoa_task_info b WHERE b.ID='${talkId}') as talkId,(select b.id from hyoa_task_info b WHERE b.iD='${talkId}') as id,(select b.title from hyoa_task_info b WHERE b.iD='${talkId}') as title,(select c.receive_person_id from hyoa_task_receiver c WHERE c.iD='${talkId}') as receivePersonName,(select b.deploy_person_id from hyoa_task_info b WHERE b.iD='${talkId}') as deployPersonId,(select \ b.start_time from hyoa_task_info b WHERE b.iD='${talkId}') as startTime,(select b.end_time from hyoa_task_info b WHERE b.iD='${talkId}') as endTimefrom FROM BPM_HI_ACTIVITY_EVENT d where rownum=1
     ${accountId-1}    Set Variable    ${rs[0][0]}
     ${talkId-1}    Set Variable    ${rs[0][1]}
@@ -70,7 +70,7 @@ getTerminalTalkByTid_02
     ReturnParameter    flag    exception    statusCode    result    id    id
     ...    title    receivePersonName    deployPersonId    startTime    endTime    taskTypeName2
     ...    content
-    OracleConnect    'hyoa_app','hyoa_app','192.168.20.12:1521/jreap_dev'    select (select a.description from SECURITY_ACCOUNT a WHERE a.description='${accountId}' and rownum=1) as accountId,(select b.id from hyoa_task_info b WHERE b.ID='${talkId}') as talkId,(select b.id from hyoa_task_info b WHERE b.iD='${talkId}') as id,(select b.title from hyoa_task_info b WHERE b.iD='${talkId}') as title,(select c.receive_person_id from hyoa_task_receiver c WHERE c.iD='${talkId}') as receivePersonName,(select b.deploy_person_id from hyoa_task_info b WHERE b.iD='${talkId}') as deployPersonId,(select \ b.start_time from hyoa_task_info b WHERE b.iD='${talkId}') as startTime,(select b.end_time from hyoa_task_info b WHERE b.iD='${talkId}') as endTimefrom FROM BPM_HI_ACTIVITY_EVENT d where rownum=1
+    OracleConnect    'hyoa_app','hyoa_app','192.168.20.12:1521/ORCL'    select (select a.description from SECURITY_ACCOUNT a WHERE a.description='${accountId}' and rownum=1) as accountId,(select b.id from hyoa_task_info b WHERE b.ID='${talkId}') as talkId,(select b.id from hyoa_task_info b WHERE b.iD='${talkId}') as id,(select b.title from hyoa_task_info b WHERE b.iD='${talkId}') as title,(select c.receive_person_id from hyoa_task_receiver c WHERE c.iD='${talkId}') as receivePersonName,(select b.deploy_person_id from hyoa_task_info b WHERE b.iD='${talkId}') as deployPersonId,(select \ b.start_time from hyoa_task_info b WHERE b.iD='${talkId}') as startTime,(select b.end_time from hyoa_task_info b WHERE b.iD='${talkId}') as endTimefrom FROM BPM_HI_ACTIVITY_EVENT d where rownum=1
     InquireDatabase
     Disconnect From Database
     JudgeCondition    ${addr.status_code}==200 and '${flag}'=='success' and '${exception}'=='' and ${statusCode}==0    ${addr.status_code}!=200    '${flag}'=='flase'    '${exception}'!=''    ${statusCode}!=0

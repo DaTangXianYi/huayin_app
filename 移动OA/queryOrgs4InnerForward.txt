@@ -1,13 +1,23 @@
+*** Settings ***
+Documentation     收文、签报流程中，具体办事员内部转发他人，选择人员数据接口
+Test Timeout      2 minutes    # 2分钟
+Library           RequestsLibrary
+Library           Collections
+Library           DatabaseLibrary
+Library           OperatingSystem
+Resource          ../业务关键字.txt
+
 *** Variables ***
 ${accountId}      ff8080816218fa3801626f5e554c00e0
 
 *** Test Cases ***
 queryOrgs4InnerForward_01
+    [Documentation]    收文、签报流程中，具体办事员内部转发他人，选择人员数据接口成功
+    [Timeout]    1 minute    # 1分钟
     Set Environment Variable    NLS_LANG    SIMPLIFIED_CHINESE_CHINA_UTF8
     Create Session    api    http://192.168.26.35:8080
     ${addr}    get request    api    hyoa/camel/mapi/hyoaMobileService/queryOrgs4InnerForward?accountId=${accountId}
     Should Be Equal As Strings    ${addr.status_code}    200    #判断请求响应是否为200，服务器成功返回网页
-    log    ${addr.content}    #打印接口返回值
     ${responsedate}    to json    ${addr.content}    #使用to json将string转换为json串
     ${keys}    Get Dictionary Keys    ${responsedate}
     ${dict0}    get from list    ${responsedate}    0
@@ -17,30 +27,33 @@ queryOrgs4InnerForward_01
     ${parentName}    get from dictionary    ${dict0}    parentName
     ${accountList}    get from dictionary    ${dict0}    accountList
     ${accountList0}    get from list    ${accountList}    0
-    ${id1}    get from dictionary    ${accountList0}    id
-    ${name1}    get from dictionary    ${accountList0}    name
+    ${id1}    get from dictionary    ${accountList0}    id1
+    ${name1}    get from dictionary    ${accountList0}    name1
     ${dept}    get from dictionary    ${accountList0}    dept
     ${orderno}    get from dictionary    ${accountList0}    orderno
-    ${accountId-1}    get from dictionary    ${accountList0}    accountId
+    ${accountId-1}    get from dictionary    ${accountList0}    accountId-1
     ${eMail}    get from dictionary    ${accountList0}    eMail
     ${loginName}    get from dictionary    ${accountList0}    loginName
-    Connect To Database Using Custom Params    cx_Oracle    'hyoa20180602','hyoa20180602','192.168.25.11:1521/devorcl'
+    Connect To Database Using Custom Params    cx_Oracle    'hyoa_app','hyoa_app','192.168.20.12:1521/ORCL'
     ${parentid}    Query    select c.parent_id from security_account a,security_employee b,security_organization c where a.employee_id=b.id and b.dept_id=c.id and a.description='${accountId}'
-    ${result}    Query    select name from security_organization \ where parent_id='${parentid[0][0]}'
-    log    ${result}
-    ${resultDecode}    DatabaseLibrary.Decode    ${result[0][0]}    GBK
+    ${result}    Query    select name from security_organization where parent_id='${parentid[0][0]}'
+    ${resultDecode}    Decode    ${result[0][0]}    GBK
     Delete All Sessions
 
 queryOrgs4InnerForward_02
-    [Documentation]    分层
+    [Documentation]    收文、签报流程中，具体办事员内部转发他人，选择人员数据接口成功:分层
+    [Template]    RequestGet
     [Timeout]    1 minute    # 1分钟
     UTF8Environment
     SessionCreate    http://192.168.26.35:8080
     RequestGet    hyoa/camel/mapi/hyoaMobileService/queryOrgs4InnerForward?accountId=${accountId}    200
     ReturnParameter    id    name    parentNameId    parentName    accountList    id1
     ...    name1    dept    orderno    accountId-1    eMail    loginName
-    OracleConnect    'hyoa_app','hyoa_app','192.168.20.12:1521/jreap_dev'    select parent_id from security_account a,security_employee b,security_organization c where a.employee_id=b.id and b.dept_id=c.id and a.description='${userId}'
+    OracleConnect    'hyoa_app','hyoa_app','192.168.20.12:1521/ORCL'    select c.parent_id from security_account a,security_employee b,security_organization c where a.employee_id=b.id and b.dept_id=c.id and a.description='${accountId}'
+    ${parentid}    Decode    ${rs[0][0]}    GBK
     Disconnect From Database
+    OracleConnect    'hyoa_app','hyoa_app','192.168.20.12:1521/jreap_dev'    select name from security_organization where parent_id=' ${parentid}'
+    ${resultDecode}    Decode    ${rs[0][0]}    GBK
     JudgeCondition    ${addr.status_code}==200    ${addr.status_code}!=200
     Delete All Sessions
 
@@ -48,22 +61,22 @@ queryOrgs4InnerForward_02
 ReturnParameter
     [Arguments]    ${a}    ${b}    ${c}    ${d}    ${e}    ${f}
     ...    ${g}    ${h}    ${i}    ${j}    ${k}    ${l}
-    ${responsedate}    to json    ${addr.content}    #使用to json将string转换为json串
+    ${responsedate}    to json    ${addr.content}
     ${keys}    Get Dictionary Keys    ${responsedate}
     ${dict0}    get from list    ${responsedate}    0
-    ${id}    get from dictionary    ${dict0}    a
-    ${name}    get from dictionary    ${dict0}    b
-    ${parentNameId}    get from dictionary    ${dict0}    c
-    ${parentName}    get from dictionary    ${dict0}    d
-    ${accountList}    get from dictionary    ${dict0}    e
+    ${id}    get from dictionary    ${dict0}    ${a}
+    ${name}    get from dictionary    ${dict0}    ${b}
+    ${parentNameId}    get from dictionary    ${dict0}    ${c}
+    ${parentName}    get from dictionary    ${dict0}    ${d}
+    ${accountList}    get from dictionary    ${dict0}    ${e}
     ${accountList0}    get from list    ${accountList}    0
-    ${id1}    get from dictionary    ${accountList0}    f
-    ${name1}    get from dictionary    ${accountList0}    g
-    ${dept}    get from dictionary    ${accountList0}    h
-    ${orderno}    get from dictionary    ${accountList0}    i
-    ${accountId-1}    get from dictionary    ${accountList0}    j
-    ${eMail}    get from dictionary    ${accountList0}    k
-    ${loginName}    get from dictionary    ${accountList0}    l
+    ${id1}    get from dictionary    ${accountList0}    ${f}
+    ${name1}    get from dictionary    ${accountList0}    ${g}
+    ${dept}    get from dictionary    ${accountList0}    ${h}
+    ${orderno}    get from dictionary    ${accountList0}    ${i}
+    ${accountId-1}    get from dictionary    ${accountList0}    ${j}
+    ${eMail}    get from dictionary    ${accountList0}    ${k}
+    ${loginName}    get from dictionary    ${accountList0}    ${l}
 
 JudgeCondition
     [Arguments]    ${conditions-1}    ${conditions-2}

@@ -13,10 +13,10 @@ Resource          ../业务关键字.txt
 ${month}          2018-01    #月份
 
 *** Test Cases ***
-profit_01
+profit
     [Documentation]    利润
     Set Environment Variable    NLS_LANG    SIMPLIFIED_CHINESE_CHINA_UTF8
-    Create Session    api    http://192.168.26.35:8080
+    Create Session    api    http://222.247.40.146:8080
     ${addr}    get request    api    finance/api/profit?month=${month}
     Should Be Equal As Strings    ${addr.status_code}    200    #判断请求响应是否为200，服务器成功返回网页
     ${responsedate}    to json    ${addr.content}    #使用to json将string转换为json串
@@ -46,50 +46,3 @@ profit_01
     ${YEAR_VALUE4}    get from dictionary    ${火电-单位边际利润}    YEAR_VALUE
     Run Keyword If    ${addr.status_code}==200    log    利润查询成功
     ...    ELSE IF    ${addr.status_code}!=200    log    利润查询失败
-
-profit_02
-    [Documentation]    利润
-    UTF8Environment
-    SessionCreate    http://192.168.26.35:8080
-    RequestGet    finance/api/profit?month=${month}    200
-    ReturnParameter    TYPE    MONTH_VALUE    YEAR_VALUE    TYPE    MONTH_VALUE    YEAR_VALUE
-    ...    TYPE    MONTH_VALUE    YEAR_VALUE    TYPE    MONTH_VALUE    YEAR_VALUE
-    ...    TYPE    MONTH_VALUE    YEAR_VALUE    TYPE    MONTH_VALUE    YEAR_VALUE
-    JudgeCondition    ${addr.status_code}==200    ${addr.status_code}!=200
-    Delete All Sessions
-
-*** Keywords ***
-ReturnParameter
-    [Arguments]    ${a}    ${b}    ${c}    ${a1}    ${b1}    ${c1}
-    ...    ${a2}    ${b2}    ${c2}    ${a3}    ${b3}    ${c3}
-    ...    ${a4}    ${b4}    ${c4}    ${a5}    ${b5}    ${c5}
-    ${responsedate}    to json    ${addr.content}
-    ${火电}    get from list    ${responsedate}    0
-    ${TYPE}    get from dictionary    ${火电}    ${a}
-    ${MONTH_VALUE}    get from dictionary    ${火电}    ${b}
-    ${YEAR_VALUE}    get from dictionary    ${火电}    ${c}
-    ${水电}    get from list    ${responsedate}    1
-    ${TYPE1}    get from dictionary    ${水电}    ${a1}
-    ${MONTH_VALUE1}    get from dictionary    ${水电}    ${b1}
-    ${YEAR_VALUE1}    get from dictionary    ${水电}    ${c1}
-    ${风电}    get from list    ${responsedate}    2
-    ${TYPE2}    get from dictionary    ${风电}    ${a2}
-    ${MONTH_VALUE2}    get from dictionary    ${风电}    ${b2}
-    ${YEAR_VALUE2}    get from dictionary    ${风电}    ${c2}
-    ${非电}    get from list    ${responsedate}    3
-    ${TYPE3}    get from dictionary    ${非电}    ${a3}
-    ${MONTH_VALUE3}    get from dictionary    ${非电}    ${b3}
-    ${YEAR_VALUE3}    get from dictionary    ${非电}    ${c3}
-    ${总额}    get from list    ${responsedate}    4
-    ${TYPE4}    get from dictionary    ${总额}    ${a4}
-    ${MONTH_VALUE4}    get from dictionary    ${总额}    ${b4}
-    ${YEAR_VALUE4}    get from dictionary    ${总额}    ${c4}
-    ${火电-单位边际利润}    get from list    ${responsedate}    5
-    ${TYPE4}    get from dictionary    ${火电-单位边际利润}    ${a5}
-    ${MONTH_VALUE4}    get from dictionary    ${火电-单位边际利润}    ${b5}
-    ${YEAR_VALUE4}    get from dictionary    ${火电-单位边际利润}    ${c5}
-
-JudgeCondition
-    [Arguments]    ${conditions-1}    ${conditions-2}
-    Run Keyword If    ${conditions-1}    log    利润查询成功
-    ...    ELSE IF    ${conditions-2}    log    利润查询失败

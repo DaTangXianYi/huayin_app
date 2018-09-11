@@ -1,17 +1,24 @@
 *** Settings ***
-Test Timeout      2 minutes    # 2分钟
+Documentation     每日电量查询
+Test Timeout      1 minutes    # 1分钟
 Library           RequestsLibrary
 Library           Collections
+Library           DatabaseLibrary
 Library           OperatingSystem
+Resource          ../业务关键字.txt
+
+*** Variables ***
+${userId}         ff8080816218fa3801626f5e554c00e0    #用户GUID
+${timeType}       2    #时间类型:1近一月;2本年
+${energyType}     9999    #设置参数energyType，能源类型0 火电1 水电2风电9999所有
 
 *** Test Cases ***
-每日电量
+GetFdlData
+    [Documentation]    每日电量查询成功
+    [Timeout]    1 minute    # 1分钟
     Set Environment Variable    NLS_LANG    SIMPLIFIED_CHINESE_CHINA_UTF8
-    Create Session    api    http://10.232.234.210:8800
-    ${userId}    Set Variable    ff8080816218fa3801626f5e554c00e0    #用户ID
-    ${timeType}    Set Variable    2    #时间类型:1近一月;2本年
-    ${energyType}    Set Variable    1    #0火电;1水电;2风电
-    ${addr}    get request    api    HyAppService.svc/GetFdlData?userId=${userId}&timeType=${timeType}&energyType=${energyType}
+    Create Session    api    http://192.168.20.22:8099
+    ${addr}    get request    api    RISAPP/HyAppService.svc/GetFdlData?userId=${userId}&timeType=${timeType}&energyType=${energyType}
     Should Be Equal As Integers    ${addr.status_code}    200
     ${responsedata}    to json    ${addr.content}
     ${keys}    Get Dictionary Keys    ${responsedata}
@@ -32,7 +39,7 @@ Library           OperatingSystem
     ${v-3}    get from dictionary    ${PointList[3]}    v
     ${t-1}    get from dictionary    ${PointList[4]}    t
     ${v-1}    get from dictionary    ${PointList[4]}    v
-    Run Keyword if    ${addr.status_code}==200 and '${energyName}' == '水电'    log    每日电量查询成功
+    Run Keyword if    ${addr.status_code}==200 and '${energyName}' == '所有类型'    log    每日电量查询成功
     ...    ELSE IF    ${addr.status_code} != 200    log    每日电量查询失败
-    ...    ELSE    '${energyName}' != '水电'    log    每日电量查询失败
+    ...    ELSE    '${energyName}' != '所有类型'    log    每日电量查询失败
     Delete All Sessions

@@ -1,18 +1,21 @@
 *** Settings ***
+Documentation     制度库部门
 Test Timeout      2 minutes    # 2分钟
 Library           RequestsLibrary
 Library           Collections
 Library           DatabaseLibrary
-Resource          ../业务关键字.txt
 Library           OperatingSystem
+Resource          ../业务关键字.txt
 
 *** Variables ***
 ${accountId}      ff80808164fd7b7e01651217e42d0012    #用户ID
 
 *** Test Cases ***
 queryOrg_01
+    [Documentation]    制度库部门成功
+    [Timeout]    1 minute    # 1分钟
     Set Environment Variable    NLS_LANG    SIMPLIFIED_CHINESE_CHINA_UTF8
-    Create Session    api    http://192.168.25.16:8099
+    Create Session    api    http://192.168.26.35:8080
     ${addr}    Get Request    api    hyoa/camel/mapi/hyoaMobileService/queryOrg?accountId=${accountId}
     Should Be Equal As Integers    ${addr.status_code}    200
     ${responsedata}    to json    ${addr.content}
@@ -25,7 +28,7 @@ queryOrg_01
     ${target}    get from dictionary    ${jsonArray[0]}    target
     ${id-1}    get from dictionary    ${target}    id
     ${name-1}    get from dictionary    ${target}    name
-    Connect To Database Using Custom Params    cx_Oracle    'hyoa20180602','hyoa20180602','192.168.25.11:1521/devorcl'
+    Connect To Database Using Custom Params    cx_Oracle    'hyoa_app','hyoa_app','192.168.20.12:1521/ORCL'
     ${rs}    Query    select (select t.description from SECURITY_ACCOUNT t WHERE t.description='${accountId}') as accountId,(select t.id from security_organization t WHERE t.id='${id}') as id,(select \ t.name from security_organization t WHERE t.id='${id}') as name FROM BPM_HI_ACTIVITY_EVENT d where rownum=1
     ${accountId-1}    Set Variable    ${rs[0][0]}
     Should Be Equal As Strings    ${accountId-1}    ${accountId}
@@ -37,18 +40,21 @@ queryOrg_01
     Delete All Sessions
 
 queryOrg_02
-    UTF8环境
-    Session创建    http://192.168.25.16:8099
-    Get请求    hyoa/camel/mapi/hyoaMobileService/queryOrg?accountId=${accountId}    200
-    制度库部门返回的参数    jsonArray    id    name    target    id    name
-    Oracle连接    'hyoa20180602','hyoa20180602','192.168.25.11:1521/devorcl'    select (select t.description from SECURITY_ACCOUNT t WHERE t.description='${accountId}') as accountId,(select t.id from security_organization t WHERE t.id='${id}') as id,(select t.name from security_organization t WHERE t.id='${id}') as name FROM BPM_HI_ACTIVITY_EVENT d where rownum=1
-    制度库部门查询数据库
+    [Documentation]    制度库部门成功:分层
+    [Template]    RequestGet
+    [Timeout]    1 minute    # 1分钟
+    UTF8Environment
+    SessionCreate    http://192.168.26.35:8080
+    RequestGet    hyoa/camel/mapi/hyoaMobileService/queryOrg?accountId=${accountId}    200
+    ReturnParameter    jsonArray    id    name    target    id    name
+    OracleConnect    'hyoa_app','hyoa_app','192.168.20.12:1521/ORCL'    select (select t.description from SECURITY_ACCOUNT t WHERE t.description='${accountId}') as accountId,(select t.id from security_organization t WHERE t.id='${id}') as id,(select t.name from security_organization t WHERE t.id='${id}') as name FROM BPM_HI_ACTIVITY_EVENT d where rownum=1
+    InquireDatabase
     Disconnect From Database
-    制度库部门判断条件    ${addr.status_code}==200    ${addr.status_code}!=200
+    JudgeCondition    ${addr.status_code}==200    ${addr.status_code}!=200
     Delete All Sessions
 
 *** Keywords ***
-制度库部门返回的参数
+ReturnParameter
     [Arguments]    ${a}    ${b}    ${c}    ${d}    ${e}    ${f}
     ${responsedata}    to json    ${addr.content}
     ${keys}    Get Dictionary Keys    ${responsedata}
@@ -61,13 +67,13 @@ queryOrg_02
     ${id-1}    get from dictionary    ${target}    ${e}
     ${name-1}    get from dictionary    ${target}    ${f}
 
-制度库部门查询数据库
+InquireDatabase
     ${accountId-1}    Set Variable    ${rs[0][0]}
     Should Be Equal As Strings    ${accountId-1}    ${accountId}
     Should Be Equal As Strings    ${id}    ${id-1}
     Should Be Equal As Strings    ${name}    ${name-1}
 
-制度库部门判断条件
+JudgeCondition
     [Arguments]    ${conditions-1}    ${conditions-2}
     Run Keyword If    ${conditions-1}    log    制度库部门查询成功
     ...    ELSE IF    ${conditions-2}    log    制度库部门查询失败

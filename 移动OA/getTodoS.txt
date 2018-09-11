@@ -23,7 +23,7 @@ getTodoS_01
     ${id}    get from dictionary    ${responsedata[0]}    id
     ${sender}    get from dictionary    ${responsedata[0]}    sender
     ${taskId}    get from dictionary    ${responsedata[0]}    taskId
-    Connect To Database Using Custom Params    cx_Oracle    'hyoa_app','hyoa_app','192.168.20.12:1521/jreap_dev'
+    Connect To Database Using Custom Params    cx_Oracle    'hyoa_app','hyoa_app','192.168.20.12:1521/ORCL'
     ${rs}    Query    select (select t.doc_id from Hyoa_Rules t WHERE t.doc_id='${terId}') as terId,(select t.id from HYOA_DOC_DISPATCH t WHERE t.id='${terId}') as id,(select t.id from BPM_RU_TASK t WHERE t.business_key='${businessKey}'and t.id='${taskId}') as taskId FROM BPM_HI_ACTIVITY_EVENT d where rownum=1
     ${terId-1}    Set Variable    ${rs[0][0]}
     ${id-1}    Set Variable    ${rs[0][1]}
@@ -44,7 +44,7 @@ getTodoS_02
     SessionCreate    http://192.168.26.35:8080
     RequestGet    hyoa/camel/mapi/hyoaMobileService/getTodoS?terId=${terId}&businessKey=${businessKey}    200
     ReturnParameter    id    sender    taskId
-    OracleConnect    'hyoa_app','hyoa_app','192.168.20.12:1521/jreap_dev'    select (select t.doc_id from Hyoa_Rules t WHERE t.doc_id='${terId}') as terId,(select t.id from HYOA_DOC_DISPATCH t WHERE t.id='${terId}') as id,(select t.id from BPM_RU_TASK t WHERE t.business_key='${businessKey}'and t.id='${taskId}') as taskId FROM BPM_HI_ACTIVITY_EVENT d where rownum=1
+    OracleConnect    'hyoa_app','hyoa_app','192.168.20.12:1521/ORCL'    select (select t.doc_id from Hyoa_Rules t WHERE t.doc_id='${terId}') as terId,(select t.id from HYOA_DOC_DISPATCH t WHERE t.id='${terId}') as id,(select t.id from BPM_RU_TASK t WHERE t.business_key='${businessKey}'and t.id='${taskId}') as taskId FROM BPM_HI_ACTIVITY_EVENT d where rownum=1
     InquireDatabase
     Disconnect From Database
     JudgeCondition    ${addr.status_code}==200 and '${sender}'=='fwPro'    ${addr.status_code}!=200    '${sender}'!='fwPro'

@@ -1,3 +1,12 @@
+*** Settings ***
+Documentation     公告审核
+Test Timeout      2 minutes    # 2分钟
+Library           RequestsLibrary
+Library           Collections
+Library           DatabaseLibrary
+Library           OperatingSystem
+Resource          ../业务关键字.txt
+
 *** Variables ***
 ${noteId}         f8f99c37-8937-433c-ad11-4c6992a9366d
 ${taskHandle}     1
@@ -5,11 +14,12 @@ ${userId}         ff80808164fd7b7e01651217e42d0012
 
 *** Test Cases ***
 SubmitDoc_01
+    [Documentation]    公告审核成功
+    [Timeout]    1 minute    # 1分钟
     Set Environment Variable    NLS_LANG    SIMPLIFIED_CHINESE_CHINA_UTF8
     Create Session    api    http://192.168.26.35:8080
     ${addr}    get request    api    hyoa/camel/mapi/terminalRestService/SubmitDoc?userId=${userId}&noteId=${noteId}&taskHandle=${taskHandle}
     Should Be Equal As Strings    ${addr.status_code}    200    #判断请求响应是否为200，服务器成功返回网页
-    log    ${addr.content}    #打印接口返回值
     ${responsedate}    to json    ${addr.content}    #使用to json将string转换为json串
     ${keys}    Get Dictionary Keys    ${responsedate}
     ${items}    Get Dictionary items    ${responsedate}
@@ -20,12 +30,13 @@ SubmitDoc_01
     ${result}    get from dictionary    ${responsedate}    result
     ${statusCode}    get from dictionary    ${responsedate}    statusCode
     ${url}    get from dictionary    ${responsedate}    url
-    Run Keyword if    '${flag}'=='success'    log    查询成功
-    ...    ELSE    log    查询失败
+    Run Keyword if    '${flag}'=='success'    log    公告审核成功
+    ...    ELSE    log    公告审核失败
     Delete All Sessions
 
 SubmitDoc_02
-    [Documentation]    分层
+    [Documentation]    公告审核成功:分层
+    [Template]    RequestGet
     [Timeout]    1 minute    # 1分钟
     UTF8Environment
     SessionCreate    http://192.168.26.35:8080
@@ -50,8 +61,8 @@ ReturnParameter
 
 JudgeCondition
     [Arguments]    ${conditions-1}    ${conditions-2}    ${conditions-3}    ${conditions-4}    ${conditions-5}
-    Run Keyword If    ${conditions-1}    log    审核成功
-    ...    ELSE IF    ${conditions-2}    log    审核失败
-    ...    ELSE IF    ${conditions-3}    log    审核失败
-    ...    ELSE IF    ${conditions-4}    log    审核失败
-    ...    ELSE    ${conditions-5}    log    审核失败
+    Run Keyword If    ${conditions-1}    log    公告审核成功
+    ...    ELSE IF    ${conditions-2}    log    公告审核失败
+    ...    ELSE IF    ${conditions-3}    log    公告审核失败
+    ...    ELSE IF    ${conditions-4}    log    公告审核失败
+    ...    ELSE    ${conditions-5}    log    公告审核失败

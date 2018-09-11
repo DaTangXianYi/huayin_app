@@ -20,7 +20,7 @@ getTodoStatistics_01
     Create Session    api    http://192.168.26.35:8080
     ${addr}    Get Request    api    hyoa/camel/mapi/terminalRestService/getTodoStatistics?userId=${userId}
     Should Be Equal As Integers    ${addr.status_code}    200
-    Connect To Database Using Custom Params    cx_Oracle    'hyoa_app','hyoa_app','192.168.20.12:1521/jreap_dev'
+    Connect To Database Using Custom Params    cx_Oracle    'hyoa_app','hyoa_app','192.168.20.12:1521/ORCL'
     ${rs}    Query    select t.description from SECURITY_ACCOUNT t WHERE t.description='${userId}'
     ${description}=    Set Variable    ${rs[0][0]}
     Should Be Equal As Strings    ${description}    ${userId}
@@ -42,7 +42,7 @@ getTodoStatistics_02
     UTF8Environment
     SessionCreate    http://192.168.26.35:8080
     RequestGet    hyoa/camel/mapi/terminalRestService/getTodoStatistics?userId=${userId}    200
-    OracleConnect    'hyoa_app','hyoa_app','192.168.20.12:1521/jreap_dev'    select t.description from SECURITY_ACCOUNT t WHERE t.description='${userId}'
+    OracleConnect    'hyoa_app','hyoa_app','192.168.20.12:1521/ORCL'    select t.description from SECURITY_ACCOUNT t WHERE t.description='${userId}'
     InquireDatabase
     Disconnect From Database
     ReturnParameter    categories    categoriesName    categoriesCount

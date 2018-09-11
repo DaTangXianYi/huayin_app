@@ -34,7 +34,7 @@ flowHistory_01
     ${accountName}    get from dictionary    ${rows[0]}    accountName
     ${accountId}    get from dictionary    ${rows[0]}    accountId
     ${comment}    get from dictionary    ${rows[0]}    comment
-    Connect To Database Using Custom Params    cx_Oracle    'hyoa_app','hyoa_app','192.168.20.12:1521/jreap_dev'
+    Connect To Database Using Custom Params    cx_Oracle    'hyoa_app','hyoa_app','192.168.20.12:1521/ORCL'
     ${rs}    Query    select (select a.PROCESSINSTANCEID from BPM_RU_TASK a WHERE a.PROCESSINSTANCEID='${processInstanceId}' and rownum=1) as processInstanceId,(select b.ID from BPM_HI_ACTIVITY_EVENT b WHERE b.ID='${id}') as id,(select b.ACTIVITY_NAME from BPM_HI_ACTIVITY_EVENT b WHERE b.ID='${id}') as activityName,(select b.EXECUTION_TIME from BPM_HI_ACTIVITY_EVENT b WHERE b.ID='${id}') as endTime,(select c.name from bpm_account c WHERE c.ID='${accountId}') as accountName from BPM_HI_ACTIVITY_EVENT b where b.process_instance_id='${processInstanceId}' and b.is_for_monitor=1 AND rownum=1 order by b.end_time,b.handler_descrip,b.event_name,b.account_id
     ${processInstanceId-1}    Set Variable    ${rs[0][0]}
     ${id-1}    Set Variable    ${rs[0][1]}
@@ -59,7 +59,7 @@ flowHistory_02
     RequestGet    hyoa/camel/mapi/terminalRestService/flowHistory?processInstanceId=${processInstanceId}&type=${type}    200
     ReturnParameter    currpage    totalpages    totalrecords    rows    id    activityName
     ...    endTime    accountName    accountId    comment
-    OracleConnect    'hyoa_app','hyoa_app','192.168.20.12:1521/jreap_dev'    select (select a.PROCESSINSTANCEID from BPM_RU_TASK a WHERE a.PROCESSINSTANCEID='${processInstanceId}' and rownum=1) as processInstanceId,(select b.ID from BPM_HI_ACTIVITY_EVENT b WHERE b.ID='${id}') as id,(select b.ACTIVITY_NAME from BPM_HI_ACTIVITY_EVENT b WHERE b.ID='${id}') as activityName,(select b.EXECUTION_TIME from BPM_HI_ACTIVITY_EVENT b WHERE b.ID='${id}') as endTime,(select c.name from bpm_account c WHERE c.ID='${accountId}') as accountName from BPM_HI_ACTIVITY_EVENT b where b.process_instance_id='${processInstanceId}' and b.is_for_monitor=1 AND rownum=1 order by b.end_time,b.handler_descrip,b.event_name,b.account_id
+    OracleConnect    'hyoa_app','hyoa_app','192.168.20.12:1521/ORCL'    select (select a.PROCESSINSTANCEID from BPM_RU_TASK a WHERE a.PROCESSINSTANCEID='${processInstanceId}' and rownum=1) as processInstanceId,(select b.ID from BPM_HI_ACTIVITY_EVENT b WHERE b.ID='${id}') as id,(select b.ACTIVITY_NAME from BPM_HI_ACTIVITY_EVENT b WHERE b.ID='${id}') as activityName,(select b.EXECUTION_TIME from BPM_HI_ACTIVITY_EVENT b WHERE b.ID='${id}') as endTime,(select c.name from bpm_account c WHERE c.ID='${accountId}') as accountName from BPM_HI_ACTIVITY_EVENT b where b.process_instance_id='${processInstanceId}' and b.is_for_monitor=1 AND rownum=1 order by b.end_time,b.handler_descrip,b.event_name,b.account_id
     InquireDatabase
     Disconnect From Database
     JudgeCondition    ${addr.status_code}==200    ${addr.status_code}!=200

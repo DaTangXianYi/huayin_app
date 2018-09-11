@@ -1,17 +1,22 @@
 *** Settings ***
-Test Timeout      2 minutes    # 2分钟
+Documentation     煤电震动监测
+Test Timeout      1 minutes    # 1分钟
 Library           RequestsLibrary
 Library           Collections
 Library           DatabaseLibrary
-Resource          ../业务关键字.txt
 Library           OperatingSystem
+Resource          ../业务关键字.txt
+
+*** Variables ***
+${deptGuid}       716ae514-95f8-4f14-8ef8-46fd6985a7b0    #机组GUID
 
 *** Test Cases ***
 GetZdInfo
+    [Documentation]    煤电震动监测成功
+    [Timeout]    1 minute    # 1分钟
     Set Environment Variable    NLS_LANG    SIMPLIFIED_CHINESE_CHINA_UTF8
-    Create Session    api    http://10.232.234.210:8800
-    ${deptGuid}    Set Variable    716ae514-95f8-4f14-8ef8-46fd6985a7b0    #设置参数deptGuid
-    ${addr}    get request    api    HyAppService.svc/GetZdInfo?deptGuid=${deptGuid}
+    Create Session    api    http://192.168.20.22:8099
+    ${addr}    get request    api    RISAPP/HyAppService.svc/GetZdInfo?deptGuid=${deptGuid}
     Should Be Equal As Strings    ${addr.status_code}    200    #判断请求响应是否为200，服务器成功返回网页
     ${responsedate}    to json    ${addr.content}    #使用to json将string转换为json串
     ${keys}    Get Dictionary Keys    ${responsedate}

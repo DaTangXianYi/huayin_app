@@ -1,6 +1,6 @@
 *** Settings ***
 Documentation     总览
-Test Timeout      2 minutes    # 2分钟
+Test Timeout      1 minutes    # 1分钟
 Library           RequestsLibrary
 Library           Collections
 Library           DatabaseLibrary
@@ -12,20 +12,23 @@ ${energyType}     0    # 能源类型:0 火电 1 水电 2 风电
 ${showMac}        true    # 是否显示机组 （true/false）
 
 *** Test Cases ***
-GetRealDataForEnergyType_01
-    [Documentation]    总览
+GetRealDataForEnergyType
+    [Documentation]    总览成功
+    [Timeout]    1 minute    # 1分钟
     Set Environment Variable    NLS_LANG    SIMPLIFIED_CHINESE_CHINA_UTF8
-    Create Session    api    http://10.232.234.210:8800
-    ${addr}    get request    api    ssxt/HyAppService.svc/GetRealDataForEnergyType?energyType=${energyType}&showMac=${showMac}
+    Create Session    api    http://192.168.20.22:8099
+    ${addr}    get request    api    RISAPP/HyAppService.svc/GetRealDataForEnergyType?energyType=${energyType}&showMac=${showMac}
     Should Be Equal As Strings    ${addr.status_code}    200
     ${responsedate}    to json    ${addr.content}
-    ${FactoryInfoList}    get from dictionary    ${responsedate}    FactoryInfoList
-    ${fh}    get from dictionary    ${responsedate}    fh
+    ${FactoryInfoList01}    get from dictionary    ${responsedate}    FactoryInfoList
+    ${fh1}    get from dictionary    ${responsedate}    fh
+    ${FactoryInfoList}    get from list    ${FactoryInfoList01}    0
     ${day_fdl}    get from dictionary    ${FactoryInfoList}    day_fdl
     ${deptGuid}    get from dictionary    ${FactoryInfoList}    deptGuid
     ${fh}    get from dictionary    ${FactoryInfoList}    fh
     ${fhl}    get from dictionary    ${FactoryInfoList}    fhl
-    ${machineList}    get from dictionary    ${FactoryInfoList}    machineList
+    ${machineList01}    get from dictionary    ${FactoryInfoList}    machineList
+    ${machineList}    get from list    ${machineList01}    0
     ${capacity}    get from dictionary    ${machineList}    capacity
     ${day_fdl}    get from dictionary    ${machineList}    day_fdl
     ${deptGuid}    get from dictionary    ${machineList}    deptGuid
@@ -38,42 +41,3 @@ GetRealDataForEnergyType_01
     Run Keyword If    ${addr.status_code}==200    log    总览查询成功
     ...    ELSE IF    ${addr.status_code}!=200    log    总览查询失败
     Delete All Sessions
-
-GetRealDataForEnergyType_02
-    [Documentation]    总览
-    UTF8Environment
-    SessionCreate    http://10.232.234.210:8800
-    RequestGet    ssxt/HyAppService.svc/GetRealDataForEnergyType?energyType=${energyType}&showMac=${showMac}    200
-    ReturnParameter    FactoryInfoList    fh    day_fdl    deptGuid    fh    fhl
-    ...    machineList    capacity    day_fdl    deptGuid    fh    fhl
-    ...    month_fdl    name    state    year_fdl
-    JudgeCondition    ${addr.status_code}==200    ${addr.status_code}!=200
-    Delete All Sessions
-
-*** Keywords ***
-ReturnParameter
-    [Arguments]    ${a}    ${b}    ${c}    ${d}    ${e}    ${f}
-    ...    ${g}    ${h}    ${i}    ${j}    ${k}    ${l}
-    ...    ${m}    ${n}    ${o}    ${p}
-    ${responsedate}    to json    ${addr.content}
-    ${FactoryInfoList}    get from dictionary    ${responsedate}    ${a}
-    ${fh}    get from dictionary    ${responsedate}    ${b}
-    ${day_fdl}    get from dictionary    ${FactoryInfoList}    ${c}
-    ${deptGuid}    get from dictionary    ${FactoryInfoList}    ${d}
-    ${fh}    get from dictionary    ${FactoryInfoList}    ${e}
-    ${fhl}    get from dictionary    ${FactoryInfoList}    ${f}
-    ${machineList}    get from dictionary    ${FactoryInfoList}    ${g}
-    ${capacity}    get from dictionary    ${machineList}    ${h}
-    ${day_fdl}    get from dictionary    ${machineList}    ${i}
-    ${deptGuid}    get from dictionary    ${machineList}    ${j}
-    ${fh}    get from dictionary    ${machineList}    ${k}
-    ${fhl}    get from dictionary    ${machineList}    ${l}
-    ${month_fdl}    get from dictionary    ${machineList}    ${m}
-    ${name}    get from dictionary    ${machineList}    ${n}
-    ${state}    get from dictionary    ${machineList}    ${o}
-    ${year_fdl}    get from dictionary    ${machineList}    ${p}
-
-JudgeCondition
-    [Arguments]    ${conditions-1}    ${conditions-2}
-    Run Keyword If    ${conditions-1}    log    总览查询成功
-    ...    ELSE IF    ${conditions-2}    log    总览查询失败

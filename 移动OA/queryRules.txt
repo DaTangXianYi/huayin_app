@@ -1,10 +1,11 @@
 *** Settings ***
+Documentation     制度库查询
 Test Timeout      2 minutes    # 2分钟
 Library           RequestsLibrary
 Library           Collections
 Library           DatabaseLibrary
-Resource          ../业务关键字.txt
 Library           OperatingSystem
+Resource          ../业务关键字.txt
 
 *** Variables ***
 ${accountId}      ff80808164fd7b7e01651217e42d0012    #用户ID
@@ -15,6 +16,8 @@ ${page}           1    #分页索引
 
 *** Test Cases ***
 queryRules_01
+    [Documentation]    制度库查询成功
+    [Timeout]    1 minute    # 1分钟
     Set Environment Variable    NLS_LANG    SIMPLIFIED_CHINESE_CHINA_UTF8
     Create Session    api    http://192.168.26.35:8080
     ${addr}    Get Request    api    hyoa/camel/mapi/hyoaMobileService/QueryRules?page=${page}&pagesize=${pagesize}&accountId=${accountId}&orgid=${orgid}
@@ -33,7 +36,7 @@ queryRules_01
     ${docId}    get from dictionary    ${rows[0]}    docId
     ${fileName}    get from dictionary    ${rows[0]}    fileName
     ${businessKey}    get from dictionary    ${rows[0]}    businessKey
-    Connect To Database Using Custom Params    cx_Oracle    'hyoa_app','hyoa_app','192.168.20.12:1521/jreap_dev'
+    Connect To Database Using Custom Params    cx_Oracle    'hyoa_app','hyoa_app','192.168.20.12:1521/ORCL'
     ${rs}    Query    select (select t.description from SECURITY_ACCOUNT t WHERE t.description='${accountId}') as accountId,(select t.id from security_organization t WHERE t.id='${orgid}') as orgid,(select t.doc_id from Hyoa_Rules t WHERE t.doc_id='${docId}') as id FROM BPM_HI_ACTIVITY_EVENT d where rownum=1
     ${accountId-1}    Set Variable    ${rs[0][0]}
     ${orgid-1}    Set Variable    ${rs[0][1]}
@@ -50,19 +53,22 @@ queryRules_01
     Delete All Sessions
 
 queryRules_02
-    UTF8环境
-    Session创建    http://192.168.25.16:8099
-    Get请求    hyoa/camel/mapi/hyoaMobileService/QueryRules?page=${page}&pagesize=${pagesize}&accountId=${accountId}&orgid=${orgid}    200
-    制度库查询返回的参数    flag    exception    statusCode    currpage    totalpages    totalrecords
+    [Documentation]    制度库查询成功:分层
+    [Template]    RequestGet
+    [Timeout]    1 minute    # 1分钟
+    UTF8Environment
+    SessionCreate    http://192.168.26.35:8080
+    RequestGet    hyoa/camel/mapi/hyoaMobileService/QueryRules?page=${page}&pagesize=${pagesize}&accountId=${accountId}&orgid=${orgid}    200
+    ReturnParameter    flag    exception    statusCode    currpage    totalpages    totalrecords
     ...    rows    docId    fileName    businessKey
-    Oracle连接    'hyoa20180602','hyoa20180602','192.168.25.11:1521/devorcl'    select (select t.description from SECURITY_ACCOUNT t WHERE t.description='${accountId}') as accountId,(select t.id from security_organization t WHERE t.id='${orgid}') as orgid,(select t.doc_id from Hyoa_Rules t WHERE t.doc_id='${docId}') as id FROM BPM_HI_ACTIVITY_EVENT d where rownum=1
-    制度库查询数据库
+    OracleConnect    'hyoa_app','hyoa_app','192.168.20.12:1521/ORCL'    select (select t.description from SECURITY_ACCOUNT t WHERE t.description='${accountId}') as accountId,(select t.id from security_organization t WHERE t.id='${orgid}') as orgid,(select t.doc_id from Hyoa_Rules t WHERE t.doc_id='${docId}') as id FROM BPM_HI_ACTIVITY_EVENT d where rownum=1
+    InquireDatabase
     Disconnect From Database
-    制度库判断条件    ${addr.status_code}==200 and '${flag}'=='success' and '${exception}'=='' and ${statusCode}==0    ${addr.status_code}!=200    '${flag}'=='flase'    '${exception}'!=''    ${statusCode}!=0
+    JudgeCondition    ${addr.status_code}==200 and '${flag}'=='success' and '${exception}'=='' and ${statusCode}==0    ${addr.status_code}!=200    '${flag}'=='flase'    '${exception}'!=''    ${statusCode}!=0
     Delete All Sessions
 
 *** Keywords ***
-制度库查询返回的参数
+ReturnParameter
     [Arguments]    ${a}    ${b}    ${c}    ${d}    ${e}    ${f}
     ...    ${g}    ${h}    ${i}    ${j}
     ${responsedata}    to json    ${addr.content}
@@ -80,7 +86,7 @@ queryRules_02
     ${fileName}    get from dictionary    ${rows[0]}    ${i}
     ${businessKey}    get from dictionary    ${rows[0]}    ${j}
 
-制度库查询数据库
+InquireDatabase
     ${accountId-1}    Set Variable    ${rs[0][0]}
     ${orgid-1}    Set Variable    ${rs[0][1]}
     ${id-1}    Set Variable    ${rs[0][2]}
@@ -88,7 +94,7 @@ queryRules_02
     Should Be Equal As Strings    ${orgid-1}    ${orgid}
     Should Be Equal As Strings    ${id-1}    ${docId}
 
-制度库判断条件
+JudgeCondition
     [Arguments]    ${conditions-1}    ${conditions-2}    ${conditions-3}    ${conditions-4}    ${conditions-5}
     Run Keyword If    ${conditions-1}    log    制度库查询成功
     ...    ELSE IF    ${conditions-2}    log    制度库查询失败

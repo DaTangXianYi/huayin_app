@@ -1,15 +1,22 @@
 *** Settings ***
-Test Timeout      2 minutes    # 2分钟
+Documentation     开停机告警
+Test Timeout      1 minutes    # 1分钟
 Library           RequestsLibrary
 Library           Collections
+Library           DatabaseLibrary
 Library           OperatingSystem
+Resource          ../业务关键字.txt
+
+*** Variables ***
+${userId}         ff8080816218fa3801626f5e554c00e0    #用户GUID
 
 *** Test Cases ***
-开停机告警
+GetStartStopAlarmInfo
+    [Documentation]    开停机告警成功
+    [Timeout]    1 minute    # 1分钟
     Set Environment Variable    NLS_LANG    SIMPLIFIED_CHINESE_CHINA_UTF8
-    Create Session    api    http://10.232.234.210:8800
-    ${userId}    Set Variable    ff8080816218fa3801626f5e554c00e0    #用户GUID
-    ${addr}    get request    api    HyAppService.svc/GetStartStopAlarmInfo?userId=${userId}
+    Create Session    api    http://192.168.20.22:8099
+    ${addr}    get request    api    RISAPP/HyAppService.svc/GetStartStopAlarmInfo?userId=${userId}
     Should Be Equal As Integers    ${addr.status_code}    200
     ${responsedata}    to json    ${addr.content}
     ${capacity}    get from dictionary    ${responsedata[0]}    capacity

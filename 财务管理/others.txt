@@ -12,10 +12,10 @@ ${month}          2018-01    # 月份
 ${company}        DTHN-01-01-03    # 公司编号
 
 *** Test Cases ***
-others_01
+others
     [Documentation]    其他财务指标
     Set Environment Variable    NLS_LANG    SIMPLIFIED_CHINESE_CHINA_UTF8
-    Create Session    api    http://192.168.26.35:8080
+    Create Session    api    http://222.247.40.146:8080
     ${addr}    Get Request    api    finance/api/others?month=${month}&company=${company}
     Should Be Equal As Integers    ${addr.status_code}    200
     ${responsedata}    to json    ${addr.content}
@@ -25,24 +25,3 @@ others_01
     Run Keyword If    ${addr.status_code}==200    log    其他财务指标查询成功
     ...    ELSE IF    ${addr.status_code}!=200    log    其他财务指标查询失败
     Delete All Sessions
-
-others_02
-    [Documentation]    其他财务指标
-    UTF8Environment
-    SessionCreate    http://192.168.26.35:8080
-    RequestGet    finance/api/others?month=${month}&company=${company}    200
-    ReturnParameter    TYPE    MONTH_VALUE    YEAR_VALUE
-    JudgeCondition    ${addr.status_code}==200    ${addr.status_code}!=200
-    Delete All Sessions
-
-*** Keywords ***
-ReturnParameter
-    [Arguments]    ${a}    ${b}    ${c}
-    ${TYPE}    get from dictionary    ${responsedata[0]}    ${a}
-    ${MONTH_VALUE}    get from dictionary    ${responsedata[0]}    ${b}
-    ${YEAR_VALUE}    get from dictionary    ${responsedata[0]}    ${c}
-
-JudgeCondition
-    [Arguments]    ${conditions-1}    ${conditions-2}
-    Run Keyword If    ${conditions-1}    log    其他财务指标查询成功
-    ...    ELSE IF    ${conditions-2}    log    其他财务指标查询失败
