@@ -5,7 +5,7 @@ Library           RequestsLibrary
 Library           Collections
 Library           DatabaseLibrary
 Library           OperatingSystem
-Resource          ../业务关键字.txt
+Resource          ../通用关键字.txt
 
 *** Variables ***
 ${taskId}         4028999064f80a5e0164f98e4d2e0071    # 当前节点ID

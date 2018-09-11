@@ -5,7 +5,7 @@ Library           RequestsLibrary
 Library           Collections
 Library           DatabaseLibrary
 Library           OperatingSystem
-Resource          ../业务关键字.txt
+Resource          ../通用关键字.txt
 
 *** Variables ***
 ${deptGuid}       aa6173f6-e31b-wang-6dff66b7e24e1    #风场ID

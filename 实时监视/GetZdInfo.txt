@@ -5,7 +5,7 @@ Library           RequestsLibrary
 Library           Collections
 Library           DatabaseLibrary
 Library           OperatingSystem
-Resource          ../业务关键字.txt
+Resource          ../通用关键字.txt
 
 *** Variables ***
 ${deptGuid}       716ae514-95f8-4f14-8ef8-46fd6985a7b0    #机组GUID

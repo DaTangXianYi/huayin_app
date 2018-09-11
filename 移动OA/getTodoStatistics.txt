@@ -7,7 +7,7 @@ Library           RequestsLibrary
 Library           Collections
 Library           DatabaseLibrary
 Library           OperatingSystem
-Resource          ../业务关键字.txt
+Resource          ../通用关键字.txt
 
 *** Variables ***
 ${userId}         ff80808164d0c86d0164ede9870f003c    # 用户ID

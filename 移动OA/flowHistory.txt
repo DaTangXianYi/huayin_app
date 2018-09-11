@@ -6,7 +6,7 @@ Library           RequestsLibrary
 Library           Collections
 Library           DatabaseLibrary
 Library           OperatingSystem
-Resource          ../业务关键字.txt
+Resource          ../通用关键字.txt
 
 *** Variables ***
 ${processInstanceId}    75a8119c-f68f-433c-ac21-1b185b3d0f45    # 任务id
